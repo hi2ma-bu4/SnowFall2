@@ -1,9 +1,7 @@
-// wasm/src/common/mod.rs
-
-use serde::{Serialize, Deserialize};
-use thiserror::Error;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
+use thiserror::Error;
 
 // 型を一意に識別するためのID
 pub type TypeId = u32;

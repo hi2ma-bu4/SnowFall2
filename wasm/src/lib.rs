@@ -1,10 +1,8 @@
-// wasm/src/lib.rs
-
 // このライブラリのルートモジュールです。
 // Wasmに公開する関数などを定義します。
 extern crate wasm_bindgen;
-use wasm_bindgen::prelude::*;
 use std::mem;
+use wasm_bindgen::prelude::*;
 
 // 共通モジュールを宣言
 pub mod common;

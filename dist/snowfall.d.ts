@@ -1,4 +1,4 @@
-import { SnowFallErrorData } from './errors';
+import { SnowFallErrorData } from "./errors";
 /**
  * Host/TS側からWasmへ渡される要求データ。
  */
@@ -11,7 +11,7 @@ export interface HostRequest {
  * Wasm側からHost/TSへ返される応答データ。
  */
 export interface HostResponse {
-    status: 'OK' | 'ERROR';
+    status: "OK" | "ERROR";
     result?: any;
     error_info?: SnowFallErrorData;
 }

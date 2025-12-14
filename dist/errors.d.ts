@@ -8,7 +8,7 @@ export interface SnowFallErrorContext {
  * Rust(Wasm)から渡されるエラーオブジェクトのJSON構造に対応するインターフェース。
  */
 export interface SnowFallErrorData {
-    type: 'CompilationError' | 'RuntimeError' | 'SyntaxError' | string;
+    type: "CompilationError" | "RuntimeError" | "SyntaxError" | string;
     message: string;
     code: string;
     line: number;
