@@ -1,4 +1,17 @@
 import { SnowFallErrorData } from "./errors";
+import * as wasm from "../pkg/snowfall_core.js";
+type WasmModule = typeof wasm & {
+    memory: WebAssembly.Memory;
+};
+/**
+ * Wasmのメモリ内にある大規模なオブジェクトへの参照を表すインターフェース。
+ */
+export interface SnowFallHandle {
+    __type: "SnowFallHandle";
+    id: number;
+    dataType: "Array" | "Dictionary";
+    size: number;
+}
 /**
  * Host/TS側からWasmへ渡される要求データ。
  */
@@ -21,21 +34,14 @@ export interface HostResponse {
 export declare class SnowFall {
     private wasm;
     private isInitialized;
+    private handleRegistry;
+    constructor();
+    init(wasmUrl: string | ArrayBuffer): Promise<void>;
+    ensureInitialized(): WasmModule;
     /**
-     * Wasmモジュールを非同期で初期化します。
+     * テスト用にハンドルからプロキシを作成する。
      */
-    init(wasmUrl: string): Promise<void>;
-    /**
-     * 初期化が完了していることを保証するヘルパーメソッド。
-     */
-    private ensureInitialized;
-    /**
-     * Wasmメモリからポインタを介してオブジェクトをデコード(デシリアライズ)します。
-     */
-    private decodeObjectFromWasm;
-    /**
-     * オブジェクトをエンコード(シリアライズ)してWasmメモリに書き込み、ポインタを返します。
-     */
-    private encodeObjectToWasm;
+    _test_create_proxy_from_handle(handle: SnowFallHandle): any;
 }
+export {};
 //# sourceMappingURL=snowfall.d.ts.map
