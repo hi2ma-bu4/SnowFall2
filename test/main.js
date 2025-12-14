@@ -1,4 +1,4 @@
-import { SnowFall } from "../dist/snowfall";
+import { SnowFall } from "../dist/snowfall.js";
 
 const sf = new SnowFall();
 
