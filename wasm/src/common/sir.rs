@@ -1,5 +1,3 @@
-// wasm/src/common/sir.rs
-
 use serde::{Deserialize, Serialize};
 
 use super::object::SnowValue;

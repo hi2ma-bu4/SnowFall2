@@ -1,5 +1,3 @@
-// wasm/src/compiler/mod.rs
-
 /**
  * @fileoverview
  * このモジュールは、SnowFall言語のコンパイル時ロジックを実装します。
@@ -8,5 +6,4 @@
  * This module implements the compile-time logic for the SnowFall language.
  * This includes static validation, AST parsing, and intermediate code generation.
  */
-
 pub mod validator;

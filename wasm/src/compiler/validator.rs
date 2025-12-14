@@ -1,8 +1,6 @@
-// wasm/src/compiler/validator.rs
-
-use std::collections::HashMap;
 use crate::common::error::SnowFallError;
 use crate::common::object::TypeId;
+use std::collections::HashMap;
 
 /// コンパイル時の型定義を表すための簡易的な構造体。
 /// A simplified struct to represent a type definition at compile time.
@@ -45,7 +43,7 @@ pub fn validate_property_access(
         "CompilationError".to_string(),
         format!("Property '{}' not found on type.", property_name),
         "SF020".to_string(), // 新しいエラーコード
-        0, // 行番号と列番号はASTから取得する想定
+        0,                   // 行番号と列番号はASTから取得する想定
         0,
     ))
 }

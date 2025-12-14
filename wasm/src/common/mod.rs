@@ -1,5 +1,4 @@
-// wasm/src/common/mod.rs
-
+pub mod error;
 /**
  * @fileoverview
  * このモジュールは、SnowFall言語のコンパイラとランタイム全体で共有される
@@ -10,8 +9,6 @@
  * language's compiler and runtime. This includes the SnowFall object model,
  * error representations, and the intermediate representation (SIR) format.
  */
-
 // 新しいモジュールを公開します (Expose the new modules).
 pub mod object;
-pub mod error;
 pub mod sir;

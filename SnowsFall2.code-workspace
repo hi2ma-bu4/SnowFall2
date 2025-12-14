@@ -7,7 +7,9 @@
 	"settings": {
 		"cSpell.words": [
 			"bindgen",
-			"serde"
+			"codegen",
+			"serde",
+			"thiserror"
 		]
 	}
 }

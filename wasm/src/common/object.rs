@@ -1,5 +1,3 @@
-// wasm/src/common/object.rs
-
 use std::collections::HashMap;
 
 // serdeのSerializeとDeserializeをインポートします。

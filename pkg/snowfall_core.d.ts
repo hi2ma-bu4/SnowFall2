@@ -65,18 +65,18 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly _test_create_array_handle: () => any;
-  readonly _test_create_dictionary_handle: () => any;
-  readonly _test_error_propagation: () => any;
-  readonly _test_prototype_lookup: (a: number, b: number) => any;
-  readonly _test_static_validation: (a: number, b: number, c: number) => any;
+  readonly main_init: () => void;
   readonly allocate_memory: (a: number) => number;
-  readonly find_property_on_prototype: (a: any, b: number, c: number) => any;
   readonly free_memory: (a: number, b: number) => void;
   readonly get_element_by_handle: (a: number, b: any) => any;
-  readonly main_init: () => void;
-  readonly release_handle: (a: number) => void;
   readonly set_element_by_handle: (a: number, b: any, c: any) => void;
+  readonly release_handle: (a: number) => void;
+  readonly find_property_on_prototype: (a: any, b: number, c: number) => any;
+  readonly _test_static_validation: (a: number, b: number, c: number) => any;
+  readonly _test_error_propagation: () => any;
+  readonly _test_prototype_lookup: (a: number, b: number) => any;
+  readonly _test_create_array_handle: () => any;
+  readonly _test_create_dictionary_handle: () => any;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_exn_store: (a: number) => void;

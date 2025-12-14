@@ -65,7 +65,7 @@ class SnowFallArrayProxy {
 					return true;
 				}
 				return Reflect.set(target, prop, value);
-			}
+			},
 		});
 	}
 }
@@ -74,29 +74,29 @@ class SnowFallArrayProxy {
  * Wasm内のSnowFall Dictionaryへのプロキシ。
  */
 class SnowFallDictionaryProxy {
-    private handle: SnowFallHandle;
-    private wasm: WasmModule;
+	private handle: SnowFallHandle;
+	private wasm: WasmModule;
 
-    constructor(handle: SnowFallHandle, wasm: WasmModule) {
-        this.handle = handle;
-        this.wasm = wasm;
+	constructor(handle: SnowFallHandle, wasm: WasmModule) {
+		this.handle = handle;
+		this.wasm = wasm;
 
-        return new Proxy(this, {
-            get: (target, prop) => {
-                if (typeof prop === 'string') {
-                    return target.wasm.get_element_by_handle(target.handle.id, prop);
-                }
-                return Reflect.get(target, prop);
-            },
-            set: (target, prop, value) => {
-                if (typeof prop === 'string') {
-                    target.wasm.set_element_by_handle(target.handle.id, prop, value);
-                    return true;
-                }
-                return Reflect.set(target, prop, value);
-            }
-        });
-    }
+		return new Proxy(this, {
+			get: (target, prop) => {
+				if (typeof prop === "string") {
+					return target.wasm.get_element_by_handle(target.handle.id, prop);
+				}
+				return Reflect.get(target, prop);
+			},
+			set: (target, prop, value) => {
+				if (typeof prop === "string") {
+					target.wasm.set_element_by_handle(target.handle.id, prop, value);
+					return true;
+				}
+				return Reflect.set(target, prop, value);
+			},
+		});
+	}
 }
 
 /**

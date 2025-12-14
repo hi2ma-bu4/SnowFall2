@@ -1,5 +1,3 @@
-// wasm/src/common/error.rs
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -46,13 +44,7 @@ pub struct SnowFallError {
 impl SnowFallError {
     /// 新しいSnowFallErrorインスタンスを作成します。
     /// Creates a new SnowFallError instance.
-    pub fn new(
-        r#type: String,
-        message: String,
-        code: String,
-        line: u32,
-        column: u32,
-    ) -> Self {
+    pub fn new(r#type: String, message: String, code: String, line: u32, column: u32) -> Self {
         Self {
             r#type,
             message,
