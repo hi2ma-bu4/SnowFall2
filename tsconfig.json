@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "target": "ES2024",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "skipDefaultLibCheck": true,
+        "strict": true
+    },
+    "include": [
+        "src"
+    ]
+}
