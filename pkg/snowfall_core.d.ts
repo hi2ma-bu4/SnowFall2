@@ -1,20 +1,25 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export function compile_source(source: string, config_json: string): string;
+/**
+ * Wasmモジュールのメモリを確保し、そのポインタを返す。
+ * TS側でデータをWasmに渡す際に使用される。
+ */
+export function allocate_memory(size: number): number;
 
-export function execute_bytecode(bytecode: string, config_json: string): string;
+/**
+ * Wasmモジュール内の確保されたメモリを解放する。
+ * TS側でWasmから受け取ったデータの処理が終わった後に呼び出す。
+ */
+export function free_memory(ptr: number, size: number): void;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly compile_source: (a: number, b: number, c: number, d: number) => [number, number];
-  readonly execute_bytecode: (a: number, b: number, c: number, d: number) => [number, number];
+  readonly allocate_memory: (a: number) => number;
+  readonly free_memory: (a: number, b: number) => void;
   readonly __wbindgen_externrefs: WebAssembly.Table;
-  readonly __wbindgen_malloc: (a: number, b: number) => number;
-  readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
-  readonly __wbindgen_free: (a: number, b: number, c: number) => void;
   readonly __wbindgen_start: () => void;
 }
 
