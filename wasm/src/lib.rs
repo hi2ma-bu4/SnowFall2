@@ -16,12 +16,8 @@ extern crate lazy_static;
 // `console.error` を介してパニック情報を表示するためのフック
 extern crate console_error_panic_hook;
 
-// モジュールをインラインで宣言
-pub mod common {
-    pub mod object;
-    pub mod error;
-    pub mod sir;
-}
+// モジュールを宣言
+pub mod common;
 pub mod compiler {
     pub mod validator;
 }

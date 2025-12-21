@@ -11,4 +11,5 @@ pub mod error;
  */
 // 新しいモジュールを公開します (Expose the new modules).
 pub mod object;
+pub mod operator;
 pub mod sir;
