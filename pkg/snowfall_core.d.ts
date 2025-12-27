@@ -2,6 +2,11 @@
 /* eslint-disable */
 
 /**
+ * コード生成器の出力をテストするための関数。
+ */
+export function _test_codegen(input: string): any;
+
+/**
  * テスト用の配列ハンドルを作成して返す。
  */
 export function _test_create_array_handle(): any;
@@ -22,19 +27,34 @@ export function _test_error_propagation(): any;
 export function _test_implicit_comparison(left: any, right: any): boolean;
 
 /**
+ * 字句解析器の出力をテストするための関数。
+ */
+export function _test_lexer(input: string): any;
+
+/**
+ * 構文解析器の出力をテストするための関数。
+ */
+export function _test_parser(input: string): any;
+
+/**
  * プロトタイプチェーン検索をテストするための一時的な関数。
  */
 export function _test_prototype_lookup(key: string): any;
 
 /**
- * 静的検証ロジックをテストするための関数。
+ * 静的型検証器の出力をテストするための関数。
  */
-export function _test_static_validation(type_id: number, property_name: string): any;
+export function _test_verifier(input: string): any;
 
 /**
  * Wasmモジュールのメモリを確保し、そのポインタを返す。
  */
 export function allocate_memory(size: number): number;
+
+/**
+ * Compiles SnowFall source code into SIR.
+ */
+export function compile(input: string): any;
 
 /**
  * `find_property_recursive` をWasmに公開するためのラッパー関数。
@@ -70,12 +90,15 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly _test_codegen: (a: number, b: number) => any;
   readonly _test_create_array_handle: () => any;
   readonly _test_create_dictionary_handle: () => any;
   readonly _test_error_propagation: () => any;
   readonly _test_implicit_comparison: (a: any, b: any) => [number, number, number];
+  readonly _test_lexer: (a: number, b: number) => any;
+  readonly _test_parser: (a: number, b: number) => any;
   readonly _test_prototype_lookup: (a: number, b: number) => any;
-  readonly _test_static_validation: (a: number, b: number, c: number) => any;
+  readonly _test_verifier: (a: number, b: number) => any;
   readonly allocate_memory: (a: number) => number;
   readonly find_property_on_prototype: (a: any, b: number, c: number) => any;
   readonly free_memory: (a: number, b: number) => void;
@@ -83,6 +106,7 @@ export interface InitOutput {
   readonly main_init: () => void;
   readonly release_handle: (a: number) => void;
   readonly set_element_by_handle: (a: number, b: any, c: any) => void;
+  readonly compile: (a: number, b: number) => any;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_exn_store: (a: number) => void;

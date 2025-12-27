@@ -183,6 +183,18 @@ if (!('encodeInto' in cachedTextEncoder)) {
 let WASM_VECTOR_LEN = 0;
 
 /**
+ * コード生成器の出力をテストするための関数。
+ * @param {string} input
+ * @returns {any}
+ */
+export function _test_codegen(input) {
+    const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm._test_codegen(ptr0, len0);
+    return ret;
+}
+
+/**
  * テスト用の配列ハンドルを作成して返す。
  * @returns {any}
  */
@@ -224,6 +236,30 @@ export function _test_implicit_comparison(left, right) {
 }
 
 /**
+ * 字句解析器の出力をテストするための関数。
+ * @param {string} input
+ * @returns {any}
+ */
+export function _test_lexer(input) {
+    const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm._test_lexer(ptr0, len0);
+    return ret;
+}
+
+/**
+ * 構文解析器の出力をテストするための関数。
+ * @param {string} input
+ * @returns {any}
+ */
+export function _test_parser(input) {
+    const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm._test_parser(ptr0, len0);
+    return ret;
+}
+
+/**
  * プロトタイプチェーン検索をテストするための一時的な関数。
  * @param {string} key
  * @returns {any}
@@ -236,15 +272,14 @@ export function _test_prototype_lookup(key) {
 }
 
 /**
- * 静的検証ロジックをテストするための関数。
- * @param {number} type_id
- * @param {string} property_name
+ * 静的型検証器の出力をテストするための関数。
+ * @param {string} input
  * @returns {any}
  */
-export function _test_static_validation(type_id, property_name) {
-    const ptr0 = passStringToWasm0(property_name, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+export function _test_verifier(input) {
+    const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm._test_static_validation(type_id, ptr0, len0);
+    const ret = wasm._test_verifier(ptr0, len0);
     return ret;
 }
 
@@ -256,6 +291,18 @@ export function _test_static_validation(type_id, property_name) {
 export function allocate_memory(size) {
     const ret = wasm.allocate_memory(size);
     return ret >>> 0;
+}
+
+/**
+ * Compiles SnowFall source code into SIR.
+ * @param {string} input
+ * @returns {any}
+ */
+export function compile(input) {
+    const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compile(ptr0, len0);
+    return ret;
 }
 
 /**

@@ -7,13 +7,17 @@ var __export = (target, all) => {
 // pkg/snowfall_core.js
 var snowfall_core_exports = {};
 __export(snowfall_core_exports, {
+  _test_codegen: () => _test_codegen,
   _test_create_array_handle: () => _test_create_array_handle,
   _test_create_dictionary_handle: () => _test_create_dictionary_handle,
   _test_error_propagation: () => _test_error_propagation,
   _test_implicit_comparison: () => _test_implicit_comparison,
+  _test_lexer: () => _test_lexer,
+  _test_parser: () => _test_parser,
   _test_prototype_lookup: () => _test_prototype_lookup,
-  _test_static_validation: () => _test_static_validation,
+  _test_verifier: () => _test_verifier,
   allocate_memory: () => allocate_memory,
+  compile: () => compile,
   default: () => snowfall_core_default,
   find_property_on_prototype: () => find_property_on_prototype,
   free_memory: () => free_memory,
@@ -178,6 +182,12 @@ if (!("encodeInto" in cachedTextEncoder)) {
   };
 }
 var WASM_VECTOR_LEN = 0;
+function _test_codegen(input) {
+  const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm._test_codegen(ptr0, len0);
+  return ret;
+}
 function _test_create_array_handle() {
   const ret = wasm._test_create_array_handle();
   return ret;
@@ -197,21 +207,39 @@ function _test_implicit_comparison(left, right) {
   }
   return ret[0] !== 0;
 }
+function _test_lexer(input) {
+  const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm._test_lexer(ptr0, len0);
+  return ret;
+}
+function _test_parser(input) {
+  const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm._test_parser(ptr0, len0);
+  return ret;
+}
 function _test_prototype_lookup(key) {
   const ptr0 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
   const len0 = WASM_VECTOR_LEN;
   const ret = wasm._test_prototype_lookup(ptr0, len0);
   return ret;
 }
-function _test_static_validation(type_id, property_name) {
-  const ptr0 = passStringToWasm0(property_name, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+function _test_verifier(input) {
+  const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
   const len0 = WASM_VECTOR_LEN;
-  const ret = wasm._test_static_validation(type_id, ptr0, len0);
+  const ret = wasm._test_verifier(ptr0, len0);
   return ret;
 }
 function allocate_memory(size) {
   const ret = wasm.allocate_memory(size);
   return ret >>> 0;
+}
+function compile(input) {
+  const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.compile(ptr0, len0);
+  return ret;
 }
 function find_property_on_prototype(obj, key) {
   const ptr0 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
