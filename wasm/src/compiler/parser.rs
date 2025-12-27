@@ -1,4 +1,4 @@
-use crate::compiler::ast::{AstNode, Statement, Expression};
+use crate::compiler::ast::{AstNode, Expression, Statement};
 use crate::compiler::lexer::{Lexer, Token};
 use std::mem;
 
@@ -145,7 +145,7 @@ impl<'a> Parser<'a> {
             Token::False => Expression::Boolean(false),
             Token::Bang | Token::Minus => self.parse_prefix_expression()?,
             Token::LParen => {
-                 // Could be a grouped expression or a cast
+                // Could be a grouped expression or a cast
                 if self.peek_token_is_ident() {
                     // This is likely a C-style cast, e.g., (Int) my_var
                     return self.parse_cast_expression();
@@ -154,15 +154,26 @@ impl<'a> Parser<'a> {
                 }
             }
             _ => {
-                self.errors.push(format!("No prefix parse function for {:?}", self.cur_token));
+                self.errors
+                    .push(format!("No prefix parse function for {:?}", self.cur_token));
                 return None;
             }
         };
 
         // Infix parsing
         while !self.peek_token_is(&Token::Semicolon) && precedence < self.peek_precedence() {
-             match self.peek_token {
-                Token::Plus | Token::Minus | Token::Slash | Token::Asterisk | Token::Eq | Token::StrictEq | Token::NotEq | Token::StrictNotEq | Token::Lt | Token::Gt | Token::Dot => {
+            match self.peek_token {
+                Token::Plus
+                | Token::Minus
+                | Token::Slash
+                | Token::Asterisk
+                | Token::Eq
+                | Token::StrictEq
+                | Token::NotEq
+                | Token::StrictNotEq
+                | Token::Lt
+                | Token::Gt
+                | Token::Dot => {
                     self.next_token();
                     left_exp = self.parse_infix_expression(left_exp)?;
                 }
@@ -198,19 +209,23 @@ impl<'a> Parser<'a> {
             right: Box::new(right),
         })
     }
-     fn parse_cast_expression(&mut self) -> Option<Expression> {
+    fn parse_cast_expression(&mut self) -> Option<Expression> {
         // Current token is '('. We already peeked to confirm next is Ident.
         self.next_token(); // Consume '('
 
         let type_name = match self.cur_token.clone() {
             Token::Ident(name) => name,
             _ => {
-                self.errors.push(format!("Expected type name in cast, got {:?}", self.cur_token));
+                self.errors.push(format!(
+                    "Expected type name in cast, got {:?}",
+                    self.cur_token
+                ));
                 return None;
             }
         };
 
-        if !self.expect_peek(Token::RParen) { // Consume type name and expect ')'
+        if !self.expect_peek(Token::RParen) {
+            // Consume type name and expect ')'
             return None;
         }
 
@@ -224,7 +239,6 @@ impl<'a> Parser<'a> {
         })
     }
 
-
     fn parse_grouped_expression(&mut self) -> Option<Expression> {
         self.next_token(); // consume '('
         let exp = self.parse_expression(Precedence::Lowest);
@@ -237,47 +251,80 @@ impl<'a> Parser<'a> {
     fn parse_function_statement(&mut self) -> Option<Statement> {
         // `function` <return_type> <name> `(` ...
 
-        if !self.expect_peek(Token::Ident("".into())) { // Expect return type
-             self.errors.push("Expected return type.".into());
-             return None;
+        if !self.expect_peek(Token::Ident("".into())) {
+            // Expect return type
+            self.errors.push("Expected return type.".into());
+            return None;
         }
-        let return_type = match self.cur_token.clone() { Token::Ident(s) => s, _ => unreachable!() };
+        let return_type = match self.cur_token.clone() {
+            Token::Ident(s) => s,
+            _ => unreachable!(),
+        };
 
-        if !self.expect_peek(Token::Ident("".into())) { // Expect function name
-             self.errors.push("Expected function name.".into());
-             return None;
+        if !self.expect_peek(Token::Ident("".into())) {
+            // Expect function name
+            self.errors.push("Expected function name.".into());
+            return None;
         }
-        let name = match self.cur_token.clone() { Token::Ident(s) => s, _ => unreachable!() };
+        let name = match self.cur_token.clone() {
+            Token::Ident(s) => s,
+            _ => unreachable!(),
+        };
 
-        if !self.expect_peek(Token::LParen) { return None; }
+        if !self.expect_peek(Token::LParen) {
+            return None;
+        }
 
         // TODO: Parse parameters
 
-        if !self.expect_peek(Token::RParen) { return None; }
-        if !self.expect_peek(Token::LBrace) { return None; }
+        if !self.expect_peek(Token::RParen) {
+            return None;
+        }
+        if !self.expect_peek(Token::LBrace) {
+            return None;
+        }
 
         let body = self.parse_block_statement()?;
 
-        Some(Statement::Function { name, params: vec![], body: Box::new(body), return_type })
+        Some(Statement::Function {
+            name,
+            params: vec![],
+            body: Box::new(body),
+            return_type,
+        })
     }
 
     fn parse_sub_statement(&mut self) -> Option<Statement> {
-        if !self.expect_peek(Token::Ident("".into())) { // Expect sub name
-             self.errors.push("Expected sub name.".into());
-             return None;
+        if !self.expect_peek(Token::Ident("".into())) {
+            // Expect sub name
+            self.errors.push("Expected sub name.".into());
+            return None;
         }
-        let name = match self.cur_token.clone() { Token::Ident(s) => s, _ => unreachable!() };
+        let name = match self.cur_token.clone() {
+            Token::Ident(s) => s,
+            _ => unreachable!(),
+        };
 
-        if !self.expect_peek(Token::LParen) { return None; }
+        if !self.expect_peek(Token::LParen) {
+            return None;
+        }
 
         // TODO: Parse parameters
 
-        if !self.expect_peek(Token::RParen) { return None; }
-        if !self.expect_peek(Token::LBrace) { return None; }
+        if !self.expect_peek(Token::RParen) {
+            return None;
+        }
+        if !self.expect_peek(Token::LBrace) {
+            return None;
+        }
 
         let body = self.parse_block_statement()?;
 
-        Some(Statement::Sub { name, params: vec![], body: Box::new(body) })
+        Some(Statement::Sub {
+            name,
+            params: vec![],
+            body: Box::new(body),
+        })
     }
 
     fn parse_if_statement(&mut self) -> Option<Statement> {
@@ -323,10 +370,9 @@ impl<'a> Parser<'a> {
     fn peek_token_is(&self, t: &Token) -> bool {
         &self.peek_token == t
     }
-     fn peek_token_is_ident(&self) -> bool {
+    fn peek_token_is_ident(&self) -> bool {
         matches!(self.peek_token, Token::Ident(_))
     }
-
 
     fn parse_return_statement(&mut self) -> Option<Statement> {
         self.next_token(); // consume 'return'
@@ -348,7 +394,9 @@ impl<'a> Parser<'a> {
             _ => return None, // Should not happen based on calling condition
         };
 
-        if !self.expect_peek(Token::RParen) { return None; } // Consume type, expect ')'
+        if !self.expect_peek(Token::RParen) {
+            return None;
+        } // Consume type, expect ')'
 
         if !self.peek_token_is_ident() {
             // This is a cast of a more complex expression, e.g. (Int)(a+b)
@@ -356,7 +404,7 @@ impl<'a> Parser<'a> {
             let inner_expr = self.parse_expression(Precedence::Cast)?;
             return Some(Statement::Expression(Expression::Cast {
                 target_type: type_name,
-                expression: Box::new(inner_expr)
+                expression: Box::new(inner_expr),
             }));
         }
 
@@ -388,7 +436,11 @@ impl<'a> Parser<'a> {
             self.next_token();
         }
 
-        Some(Statement::Let { name, type_name, value })
+        Some(Statement::Let {
+            name,
+            type_name,
+            value,
+        })
     }
 
     fn expect_peek(&mut self, t: Token) -> bool {

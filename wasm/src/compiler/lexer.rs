@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -15,19 +15,19 @@ pub enum Token {
     String(String),
 
     // Operators
-    Assign,   // =
-    Plus,     // +
-    Minus,    // -
-    Asterisk, // *
-    Slash,    // /
-    Eq,       // ==
-    StrictEq, // ===
-    Dot,      // .
-    NotEq,    // != (Bonus, good to have)
+    Assign,      // =
+    Plus,        // +
+    Minus,       // -
+    Asterisk,    // *
+    Slash,       // /
+    Eq,          // ==
+    StrictEq,    // ===
+    Dot,         // .
+    NotEq,       // != (Bonus, good to have)
     StrictNotEq, // !== (Bonus, good to have)
-    Lt,       // <
-    Gt,       // >
-    Bang,     // !
+    Lt,          // <
+    Gt,          // >
+    Bang,        // !
 
     // Delimiters
     Comma,     // ,
@@ -122,7 +122,7 @@ impl<'a> Lexer<'a> {
             b'!' => {
                 if self.peek_char() == b'=' {
                     self.read_char();
-                     if self.peek_char() == b'=' {
+                    if self.peek_char() == b'=' {
                         self.read_char();
                         Token::StrictNotEq
                     } else {
@@ -179,7 +179,7 @@ impl<'a> Lexer<'a> {
                     _ => Token::Ident(ident),
                 };
             }
-             b'@' => {
+            b'@' => {
                 // For now, we only support @override
                 let ident = self.read_identifier();
                 if ident == "override" {
@@ -226,11 +226,13 @@ impl<'a> Lexer<'a> {
         let mut number_str = String::new();
         while self.ch.is_ascii_digit() || self.ch == b'_' || self.ch == b'.' {
             if self.ch == b'.' {
-                if is_float { break; } // no more than one dot
+                if is_float {
+                    break;
+                } // no more than one dot
                 is_float = true;
                 number_str.push('.');
             } else if self.ch != b'_' {
-                 number_str.push(self.ch as char);
+                number_str.push(self.ch as char);
             }
             self.read_char();
         }
@@ -255,11 +257,14 @@ impl<'a> Lexer<'a> {
         while self.ch.is_ascii_hexdigit() || self.ch == b'_' || self.ch == b'.' {
             self.read_char();
         }
-        let number_str: String = self.input[position..self.position].chars().filter(|&c| c != '_').collect();
+        let number_str: String = self.input[position..self.position]
+            .chars()
+            .filter(|&c| c != '_')
+            .collect();
 
         // Handle hex float like 0xf.f
         if number_str.contains('.') {
-             // Basic hex float parsing, e.g., "A.B" -> 10.6875
+            // Basic hex float parsing, e.g., "A.B" -> 10.6875
             let parts: Vec<&str> = number_str.split('.').collect();
             if parts.len() == 2 {
                 let integer_part = i64::from_str_radix(parts[0], 16).unwrap_or(0);
@@ -285,7 +290,10 @@ impl<'a> Lexer<'a> {
         while self.ch == b'0' || self.ch == b'1' || self.ch == b'_' {
             self.read_char();
         }
-        let number_str: String = self.input[position..self.position].chars().filter(|&c| c != '_').collect();
+        let number_str: String = self.input[position..self.position]
+            .chars()
+            .filter(|&c| c != '_')
+            .collect();
         match i64::from_str_radix(&number_str, 2) {
             Ok(i) => Token::Int(i),
             Err(_) => Token::Illegal(number_str),
@@ -300,7 +308,7 @@ impl<'a> Lexer<'a> {
         }
         let s = self.input[position..self.position].to_string();
         if self.ch == b'"' {
-           // self.read_char(); // skip closing '"'
+            // self.read_char(); // skip closing '"'
         }
         Token::String(s)
     }

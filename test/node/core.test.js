@@ -2,7 +2,7 @@ import assert from "node:assert";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
-import { SnowFall } from "../dist/snowfall.js";
+import { SnowFall } from "../../dist/snowfall.js";
 
 // Wasmファイルを直接読み込んでArrayBufferとして初期化
 const wasmPath = path.join(process.cwd(), "./pkg/snowfall_core_bg.wasm");
@@ -70,9 +70,9 @@ test("SnowFall Language Core Features", async (t) => {
 		// Float > Int
 		assert.strictEqual(wasm._test_implicit_comparison({ Float: 123.0 }, { Int: 123 }), true);
 		// Int > Char
-		assert.strictEqual(wasm._test_implicit_comparison({ Int: 65 }, { Char: 'A' }), true);
+		assert.strictEqual(wasm._test_implicit_comparison({ Int: 65 }, { Char: "A" }), true);
 		// Char > Boolean
-		assert.strictEqual(wasm._test_implicit_comparison({ Char: '\u0001' }, { Boolean: true }), true); // non-zero char is true
+		assert.strictEqual(wasm._test_implicit_comparison({ Char: "\u0001" }, { Boolean: true }), true); // non-zero char is true
 		// String > Boolean
 		assert.strictEqual(wasm._test_implicit_comparison({ String: "true" }, { Boolean: true }), true);
 		// 異なる型だが変換できない -> false

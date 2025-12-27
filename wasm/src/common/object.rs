@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use parking_lot::Mutex;
+use std::collections::HashMap;
 
 // serdeのSerializeとDeserializeをインポートします。
 // これらは、Rustの構造体をJSONなどの形式に変換したり、
@@ -127,7 +127,9 @@ impl SnowObject {
         if let Some(proto) = &self.__proto__ {
             if let Some(prop_from_proto) = proto.get_property(name) {
                 // 発見したプロパティをキャッシュに保存
-                self.properties_cache.lock().insert(name.to_string(), prop_from_proto.clone());
+                self.properties_cache
+                    .lock()
+                    .insert(name.to_string(), prop_from_proto.clone());
                 return Some(prop_from_proto);
             }
         }

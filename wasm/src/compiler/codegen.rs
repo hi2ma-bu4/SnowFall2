@@ -1,6 +1,6 @@
-use crate::compiler::ast::{AstNode, Expression, Statement, Visitor};
-use crate::common::sir::{Sir, Instruction, Header, ConstantEntry, DebugMapEntry};
 use crate::common::object::SnowValue;
+use crate::common::sir::{ConstantEntry, DebugMapEntry, Header, Instruction, Sir};
+use crate::compiler::ast::{AstNode, Expression, Statement, Visitor};
 use std::collections::HashMap;
 
 /// # SnowFall Intermediate Representation (SIR) Example
@@ -46,8 +46,8 @@ pub enum OpCode {
     Equals,
 
     // Control Flow
-    Jump(u32),          // Unconditional jump to instruction index
-    JumpIfFalse(u32),   // Pop stack; if false, jump to index
+    Jump(u32),        // Unconditional jump to instruction index
+    JumpIfFalse(u32), // Pop stack; if false, jump to index
 
     // Variables & Scope
     SetGlobal(u32),
@@ -80,8 +80,20 @@ impl CodeGenerator {
 
         // Finalize SIR structure
         Sir {
-            header: Header { sir_version: "1.0".to_string(), debug_enabled: false, source_hash: None },
-            constants: self.constants.iter().enumerate().map(|(i, v)| ConstantEntry { index: i as u32, value: v.clone() }).collect(),
+            header: Header {
+                sir_version: "1.0".to_string(),
+                debug_enabled: false,
+                source_hash: None,
+            },
+            constants: self
+                .constants
+                .iter()
+                .enumerate()
+                .map(|(i, v)| ConstantEntry {
+                    index: i as u32,
+                    value: v.clone(),
+                })
+                .collect(),
             code: self.instructions.clone(),
             debug_map: None,
         }
@@ -99,7 +111,7 @@ impl CodeGenerator {
             OpCode::Add => ("ADD".to_string(), vec![]),
             OpCode::Jump(addr) => ("JUMP".to_string(), vec![addr]),
             OpCode::JumpIfFalse(addr) => ("JUMP_IF_FALSE".to_string(), vec![addr]),
-            _ => ("UNKNOWN".to_string(), vec![])
+            _ => ("UNKNOWN".to_string(), vec![]),
         };
 
         let instruction = Instruction {
@@ -144,11 +156,17 @@ impl Visitor for CodeGenerator {
                 let const_idx = self.add_constant(SnowValue::Int(*val as i32));
                 self.emit(OpCode::PushConst(const_idx));
             }
-            Expression::Infix { left, operator, right } => {
+            Expression::Infix {
+                left,
+                operator,
+                right,
+            } => {
                 self.visit_expression(left);
                 self.visit_expression(right);
                 match operator {
-                    crate::compiler::Token::Plus => { self.emit(OpCode::Add); },
+                    crate::compiler::Token::Plus => {
+                        self.emit(OpCode::Add);
+                    }
                     _ => {}
                 };
             }

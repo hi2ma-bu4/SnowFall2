@@ -1,5 +1,5 @@
-use crate::common::object::SnowValue;
 use crate::common::error::SnowFallError;
+use crate::common::object::SnowValue;
 
 impl SnowValue {
     /// 内部の値を指定されたRustの型に変換しようと試みます。
@@ -113,40 +113,70 @@ pub fn implicit_comparison_equal(
     }
     // 2. どちらかがFloatなら、両方をFloatに変換して比較
     if matches!(left, SnowValue::Float(_)) || matches!(right, SnowValue::Float(_)) {
-        let l_float = left.to_float().and_then(|v| match v { SnowValue::Float(f) => Some(f), _ => None });
-        let r_float = right.to_float().and_then(|v| match v { SnowValue::Float(f) => Some(f), _ => None });
+        let l_float = left.to_float().and_then(|v| match v {
+            SnowValue::Float(f) => Some(f),
+            _ => None,
+        });
+        let r_float = right.to_float().and_then(|v| match v {
+            SnowValue::Float(f) => Some(f),
+            _ => None,
+        });
         if let (Some(l), Some(r)) = (l_float, r_float) {
             return Ok(l == r);
         }
     }
     // 3. どちらかがLongなら、両方をLongに変換して比較
     if matches!(left, SnowValue::Long(_)) || matches!(right, SnowValue::Long(_)) {
-        let l_long = left.to_long().and_then(|v| match v { SnowValue::Long(l) => Some(l), _ => None });
-        let r_long = right.to_long().and_then(|v| match v { SnowValue::Long(l) => Some(l), _ => None });
+        let l_long = left.to_long().and_then(|v| match v {
+            SnowValue::Long(l) => Some(l),
+            _ => None,
+        });
+        let r_long = right.to_long().and_then(|v| match v {
+            SnowValue::Long(l) => Some(l),
+            _ => None,
+        });
         if let (Some(l), Some(r)) = (l_long, r_long) {
             return Ok(l == r);
         }
     }
     // 4. どちらかがIntなら、両方をIntとして比較（ただしLongへの昇格は考慮済み）
     if matches!(left, SnowValue::Int(_)) || matches!(right, SnowValue::Int(_)) {
-        let l_long = left.to_long().and_then(|v| match v { SnowValue::Long(l) => Some(l), _ => None });
-        let r_long = right.to_long().and_then(|v| match v { SnowValue::Long(l) => Some(l), _ => None });
+        let l_long = left.to_long().and_then(|v| match v {
+            SnowValue::Long(l) => Some(l),
+            _ => None,
+        });
+        let r_long = right.to_long().and_then(|v| match v {
+            SnowValue::Long(l) => Some(l),
+            _ => None,
+        });
         if let (Some(l), Some(r)) = (l_long, r_long) {
             return Ok(l == r);
         }
     }
     // 5. どちらかがCharなら、両方をCharに変換して比較
     if matches!(left, SnowValue::Char(_)) || matches!(right, SnowValue::Char(_)) {
-        let l_char = left.to_char().and_then(|v| match v { SnowValue::Char(c) => Some(c), _ => None });
-        let r_char = right.to_char().and_then(|v| match v { SnowValue::Char(c) => Some(c), _ => None });
+        let l_char = left.to_char().and_then(|v| match v {
+            SnowValue::Char(c) => Some(c),
+            _ => None,
+        });
+        let r_char = right.to_char().and_then(|v| match v {
+            SnowValue::Char(c) => Some(c),
+            _ => None,
+        });
         if let (Some(l), Some(r)) = (l_char, r_char) {
             return Ok(l == r);
         }
     }
     // 6. どちらかがBooleanなら、両方をBooleanに変換して比較
     if matches!(left, SnowValue::Boolean(_)) || matches!(right, SnowValue::Boolean(_)) {
-        let l_bool = left.to_boolean().and_then(|v| match v { SnowValue::Boolean(b) => Some(b), _ => None });
-        let r_bool = right.to_boolean().and_then(|v| match v { SnowValue::Boolean(b) => Some(b), _ => None });
+        let l_bool = left.to_boolean().and_then(|v| match v {
+            SnowValue::Boolean(b) => Some(b),
+            _ => None,
+        });
+        let r_bool = right.to_boolean().and_then(|v| match v {
+            SnowValue::Boolean(b) => Some(b),
+            _ => None,
+        });
         if let (Some(l), Some(r)) = (l_bool, r_bool) {
             return Ok(l == r);
         }

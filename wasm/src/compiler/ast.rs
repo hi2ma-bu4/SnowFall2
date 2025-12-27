@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
 use crate::compiler::Token;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum AstNode {

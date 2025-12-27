@@ -20,13 +20,13 @@ extern crate console_error_panic_hook;
 pub mod common;
 pub mod compiler;
 
-use crate::common::object::{SnowObject, SnowValue, TypeId};
 use crate::common::error::SnowFallError;
+use crate::common::object::{SnowObject, SnowValue, TypeId};
 use crate::common::operator::implicit_comparison_equal;
-use crate::compiler::{CodeGenerator, Lexer, Parser, Token};
-use crate::compiler::validator::{self, TypeChecker};
-use serde::Serialize;
 use crate::compiler::ast;
+use crate::compiler::validator::{self, TypeChecker};
+use crate::compiler::{CodeGenerator, Lexer, Parser, Token};
+use serde::Serialize;
 
 // グローバルなライブオブジェクトテーブル。
 lazy_static! {
@@ -181,7 +181,6 @@ pub fn compile(input: &str) -> JsValue {
     serde_wasm_bindgen::to_value(&sir).unwrap()
 }
 
-
 // --- Test Functions ---
 
 /// コード生成器の出力をテストするための関数。
@@ -189,7 +188,6 @@ pub fn compile(input: &str) -> JsValue {
 pub fn _test_codegen(input: &str) -> JsValue {
     compile(input)
 }
-
 
 #[derive(Serialize)]
 struct VerifierTestResult {
@@ -321,10 +319,10 @@ pub fn _test_create_array_handle() -> JsValue {
 /// 暗黙の型変換を伴う比較ロジックをテストするための関数。
 #[wasm_bindgen]
 pub fn _test_implicit_comparison(left: JsValue, right: JsValue) -> Result<bool, JsValue> {
-    let left_val: SnowValue = serde_wasm_bindgen::from_value(left)
-        .map_err(|e| JsValue::from_str(&e.to_string()))?;
-    let right_val: SnowValue = serde_wasm_bindgen::from_value(right)
-        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+    let left_val: SnowValue =
+        serde_wasm_bindgen::from_value(left).map_err(|e| JsValue::from_str(&e.to_string()))?;
+    let right_val: SnowValue =
+        serde_wasm_bindgen::from_value(right).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
     implicit_comparison_equal(&left_val, &right_val)
         .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap_or(JsValue::NULL))
@@ -340,7 +338,10 @@ pub fn _test_create_dictionary_handle() -> JsValue {
     };
     let mut dict = HashMap::new();
     dict.insert("a".to_string(), SnowObject::new(10, SnowValue::Int(100)));
-    dict.insert("b".to_string(), SnowObject::new(20, SnowValue::String("world".to_string())));
+    dict.insert(
+        "b".to_string(),
+        SnowObject::new(20, SnowValue::String("world".to_string())),
+    );
     let snow_obj = SnowObject::new(40, SnowValue::Dictionary(dict));
     objects.insert(handle_id, snow_obj);
 

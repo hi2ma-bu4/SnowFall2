@@ -1,6 +1,6 @@
-use crate::compiler::ast::{AstNode, Expression, Statement, Visitor};
 use crate::common::error::SnowFallError;
 use crate::common::object::TypeId;
+use crate::compiler::ast::{AstNode, Expression, Statement, Visitor};
 use std::collections::HashMap;
 
 /// A simplified representation of types for the verifier.
@@ -12,8 +12,14 @@ pub enum Type {
     Boolean,
     Void,
     Any, // For unknown types or dynamic behavior
-    Function { param_types: Vec<Type>, return_type: Box<Type> },
-    Class { name: String, methods: HashMap<String, Type> },
+    Function {
+        param_types: Vec<Type>,
+        return_type: Box<Type>,
+    },
+    Class {
+        name: String,
+        methods: HashMap<String, Type>,
+    },
 }
 
 /// Represents the type definition of an object at compile time.
@@ -75,7 +81,9 @@ impl TypeChecker {
         self.errors.push(SnowFallError::new(
             "CompilationError".to_string(),
             format!("Type mismatch between {:?} and {:?}", left_type, right_type),
-            "SF021".to_string(), 0, 0,
+            "SF021".to_string(),
+            0,
+            0,
         ));
         Type::Any
     }
@@ -100,7 +108,11 @@ impl Visitor for TypeChecker {
     fn visit_statement(&mut self, stmt: &Statement) -> Self::Output {
         match stmt {
             Statement::Expression(expr) => self.visit_expression(expr),
-            Statement::Let { name, type_name, value } => {
+            Statement::Let {
+                name,
+                type_name,
+                value,
+            } => {
                 let val_type = self.visit_expression(value);
                 // A simplified type mapping
                 let declared_type = match type_name.as_str() {
@@ -112,10 +124,15 @@ impl Visitor for TypeChecker {
                 if declared_type != val_type {
                     // This check is too simple for a real language, but works for now.
                     // For example, it doesn't handle subtypes.
-                     self.errors.push(SnowFallError::new(
+                    self.errors.push(SnowFallError::new(
                         "CompilationError".to_string(),
-                        format!("Type mismatch for variable '{}'. Expected {:?}, got {:?}.", name, declared_type, val_type),
-                        "SF021".to_string(), 0, 0,
+                        format!(
+                            "Type mismatch for variable '{}'. Expected {:?}, got {:?}.",
+                            name, declared_type, val_type
+                        ),
+                        "SF021".to_string(),
+                        0,
+                        0,
                     ));
                 }
 
@@ -133,9 +150,15 @@ impl Visitor for TypeChecker {
             Expression::FloatLiteral(_) => Type::Float,
             Expression::StringLiteral(_) => Type::String,
             Expression::Boolean(_) => Type::Boolean,
-            Expression::Identifier(name) => self.symbol_table.get(name).cloned().unwrap_or(Type::Any),
-            Expression::Infix { left, operator, right } => {
-                 if let crate::compiler::Token::Dot = operator {
+            Expression::Identifier(name) => {
+                self.symbol_table.get(name).cloned().unwrap_or(Type::Any)
+            }
+            Expression::Infix {
+                left,
+                operator,
+                right,
+            } => {
+                if let crate::compiler::Token::Dot = operator {
                     // This is a member access, for now, we don't type it
                     return Type::Any;
                 }
@@ -145,17 +168,30 @@ impl Visitor for TypeChecker {
                 };
                 self.check_infix_expression(left, op_str, right)
             }
-            Expression::Call { function, arguments: _ } => {
-                if let Expression::Infix { left, operator: _, right } = &**function {
-                     if let Expression::Identifier(obj_name) = &**left {
+            Expression::Call {
+                function,
+                arguments: _,
+            } => {
+                if let Expression::Infix {
+                    left,
+                    operator: _,
+                    right,
+                } = &**function
+                {
+                    if let Expression::Identifier(obj_name) = &**left {
                         if let Expression::Identifier(method_name) = &**right {
-                             let obj_type = self.symbol_table.get(obj_name);
-                             if let Some(Type::String) = obj_type {
+                            let obj_type = self.symbol_table.get(obj_name);
+                            if let Some(Type::String) = obj_type {
                                 if method_name != "toUpperCase" {
                                     self.errors.push(SnowFallError::new(
                                         "CompilationError".to_string(),
-                                        format!("Method '{}' not found on type String.", method_name),
-                                        "SF020".to_string(), 0, 0,
+                                        format!(
+                                            "Method '{}' not found on type String.",
+                                            method_name
+                                        ),
+                                        "SF020".to_string(),
+                                        0,
+                                        0,
                                     ));
                                 }
                             }
