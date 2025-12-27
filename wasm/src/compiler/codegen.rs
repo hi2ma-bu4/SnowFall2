@@ -34,7 +34,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, PartialEq)]
 pub enum OpCode {
     // Stack operations
-    PushConst(u32), // Push a constant from the table onto the stack
+    PushConst(u32),
     Pop,
 
     // Arithmetic & Logic
@@ -46,19 +46,16 @@ pub enum OpCode {
     Equals,
 
     // Control Flow
-    Jump(u32),        // Unconditional jump to instruction index
-    JumpIfFalse(u32), // Pop stack; if false, jump to index
+    Jump(usize),
+    JumpIfFalse(usize),
 
     // Variables & Scope
-    SetGlobal(u32),
-    GetGlobal(u32),
+    SetVar(u32),
+    GetVar(u32),
 
     // Functions
-    Call(u8), // Call a function with `n` arguments
+    Call(u8),
     Return,
-
-    // Special
-    RecursionCheck, // Injected at the start of functions
 }
 
 pub struct CodeGenerator {
@@ -109,8 +106,10 @@ impl CodeGenerator {
             OpCode::PushConst(idx) => ("PUSH_CONST".to_string(), vec![idx]),
             OpCode::Pop => ("POP".to_string(), vec![]),
             OpCode::Add => ("ADD".to_string(), vec![]),
-            OpCode::Jump(addr) => ("JUMP".to_string(), vec![addr]),
-            OpCode::JumpIfFalse(addr) => ("JUMP_IF_FALSE".to_string(), vec![addr]),
+            OpCode::SetVar(idx) => ("SET_VAR".to_string(), vec![idx]),
+            OpCode::Return => ("RETURN".to_string(), vec![]),
+            OpCode::Jump(addr) => ("JUMP".to_string(), vec![addr as u32]),
+            OpCode::JumpIfFalse(addr) => ("JUMP_IF_FALSE".to_string(), vec![addr as u32]),
             _ => ("UNKNOWN".to_string(), vec![]),
         };
 
@@ -141,12 +140,51 @@ impl Visitor for CodeGenerator {
 
     fn visit_statement(&mut self, stmt: &Statement) {
         match stmt {
+            Statement::Let { value, .. } => {
+                self.visit_expression(value);
+                // For now, assume we're setting a local variable at index 0
+                self.emit(OpCode::SetVar(0));
+            }
             Statement::Expression(expr) => {
                 self.visit_expression(expr);
-                // Expressions as statements should have their result popped
                 self.emit(OpCode::Pop);
             }
-            _ => {}
+            Statement::If {
+                condition,
+                consequence,
+                ..
+            } => {
+                self.visit_expression(condition);
+                let jump_if_false_pos = self.emit(OpCode::JumpIfFalse(999)); // Placeholder
+                self.visit_statement(consequence);
+
+                let after_consequence_pos = self.instructions.len();
+                self.instructions[jump_if_false_pos].operands[0] = after_consequence_pos as u32;
+            }
+            Statement::Block(statements) => {
+                for s in statements {
+                    self.visit_statement(s);
+                }
+            }
+            Statement::Function { body, .. } => {
+                self.visit_statement(body);
+                // Implicitly return if the last instruction isn't already a return.
+                if self.instructions.last().map(|i| i.opcode.as_str()) != Some("RETURN") {
+                    self.emit(OpCode::PushConst(u32::MAX)); // Placeholder for void/null
+                    self.emit(OpCode::Return);
+                }
+            }
+            Statement::Sub { body, .. } => {
+                self.visit_statement(body);
+                if self.instructions.last().map(|i| i.opcode.as_str()) != Some("RETURN") {
+                    self.emit(OpCode::PushConst(u32::MAX)); // Placeholder for void/null
+                    self.emit(OpCode::Return);
+                }
+            }
+            Statement::Return(expr) => {
+                self.visit_expression(expr);
+                self.emit(OpCode::Return);
+            }
         }
     }
 
@@ -154,6 +192,18 @@ impl Visitor for CodeGenerator {
         match expr {
             Expression::IntLiteral(val) => {
                 let const_idx = self.add_constant(SnowValue::Int(*val as i32));
+                self.emit(OpCode::PushConst(const_idx));
+            }
+            Expression::FloatLiteral(val) => {
+                let const_idx = self.add_constant(SnowValue::Float(*val));
+                self.emit(OpCode::PushConst(const_idx));
+            }
+            Expression::StringLiteral(val) => {
+                let const_idx = self.add_constant(SnowValue::String(val.clone()));
+                self.emit(OpCode::PushConst(const_idx));
+            }
+            Expression::Boolean(val) => {
+                let const_idx = self.add_constant(SnowValue::Boolean(*val));
                 self.emit(OpCode::PushConst(const_idx));
             }
             Expression::Infix {
