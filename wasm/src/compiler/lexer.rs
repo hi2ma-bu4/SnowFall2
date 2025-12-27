@@ -72,6 +72,8 @@ pub struct Lexer<'a> {
     position: usize,      // current position in input (points to current char)
     read_position: usize, // current reading position in input (after current char)
     ch: u8,               // current char under examination
+    pub line: u32,        // current line number
+    pub column: u32,      // current column number
 }
 
 impl<'a> Lexer<'a> {
@@ -81,6 +83,8 @@ impl<'a> Lexer<'a> {
             position: 0,
             read_position: 0,
             ch: 0,
+            line: 1,
+            column: 1,
         };
         l.read_char();
         l
@@ -94,6 +98,13 @@ impl<'a> Lexer<'a> {
         }
         self.position = self.read_position;
         self.read_position += 1;
+
+        if self.ch == b'\n' {
+            self.line += 1;
+            self.column = 1;
+        } else {
+            self.column += 1;
+        }
     }
 
     pub fn next_token(&mut self) -> Token {
@@ -205,8 +216,25 @@ impl<'a> Lexer<'a> {
     }
 
     fn skip_whitespace(&mut self) {
-        while self.ch.is_ascii_whitespace() {
-            self.read_char();
+        loop {
+            match self.ch {
+                // Standard whitespace characters
+                b' ' | b'\r' | b'\t' | b'\n' => self.read_char(),
+                // Start of a potential comment
+                b'/' => {
+                    if self.peek_char() == b'/' {
+                        // It's a comment, consume until the end of the line
+                        while self.ch != b'\n' && self.ch != 0 {
+                            self.read_char();
+                        }
+                    } else {
+                        // Not a comment, so break the loop for the caller to handle it
+                        return;
+                    }
+                }
+                // Not whitespace or a comment, so exit
+                _ => return,
+            }
         }
     }
 

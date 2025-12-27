@@ -26,8 +26,7 @@ use crate::common::operator::implicit_comparison_equal;
 use crate::compiler::ast;
 use crate::compiler::validator::{self, TypeChecker};
 use crate::compiler::{CodeGenerator, Lexer, Parser, Token};
-use serde::Serialize;
-
+use serde::{Deserialize, Serialize};
 // グローバルなライブオブジェクトテーブル。
 lazy_static! {
     static ref LIVE_OBJECTS: Mutex<HashMap<u32, SnowObject>> = Mutex::new(HashMap::new());
@@ -166,19 +165,56 @@ pub fn find_property_on_prototype(obj: JsValue, key: String) -> JsValue {
     }
 }
 
-/// Compiles SnowFall source code into SIR.
+#[derive(Serialize, Deserialize)]
+pub struct CompileOptions {
+    pub debug_info: bool,
+}
+
+#[derive(Serialize)]
+pub struct CompileResult {
+    pub bytecode: Option<String>,
+    pub errors: Vec<SnowFallError>,
+}
+
+/// Compiles SnowFall source code into SIR plain-text format.
 #[wasm_bindgen]
-pub fn compile(input: &str) -> JsValue {
-    let lexer = Lexer::new(input);
+pub fn compile(source: &str, options: JsValue) -> JsValue {
+    let options: CompileOptions = serde_wasm_bindgen::from_value(options).unwrap_or(CompileOptions {
+        debug_info: false,
+    });
+
+    let lexer = Lexer::new(source);
     let mut parser = Parser::new(lexer);
     let ast = parser.parse_program();
 
-    // TODO: Add verification step
+    if !parser.errors.is_empty() {
+        let result = CompileResult {
+            bytecode: None,
+            errors: parser.errors,
+        };
+        return serde_wasm_bindgen::to_value(&result).unwrap();
+    }
+
+    let mut type_checker = TypeChecker::new();
+    let _ = type_checker.check(&ast);
+
+    if !type_checker.errors.is_empty() {
+        let result = CompileResult {
+            bytecode: None,
+            errors: type_checker.errors,
+        };
+        return serde_wasm_bindgen::to_value(&result).unwrap();
+    }
 
     let mut codegen = CodeGenerator::new();
     let sir = codegen.generate(&ast);
 
-    serde_wasm_bindgen::to_value(&sir).unwrap()
+    let result = CompileResult {
+        bytecode: Some(sir.to_string()),
+        errors: vec![],
+    };
+
+    serde_wasm_bindgen::to_value(&result).unwrap()
 }
 
 // --- Test Functions ---
@@ -186,7 +222,13 @@ pub fn compile(input: &str) -> JsValue {
 /// コード生成器の出力をテストするための関数。
 #[wasm_bindgen]
 pub fn _test_codegen(input: &str) -> JsValue {
-    compile(input)
+    // Note: This test function now returns a CompileResult, not a raw SIR object.
+    // The JS test side will need to be adapted.
+    let options = CompileOptions {
+        debug_info: false,
+    };
+    let js_options = serde_wasm_bindgen::to_value(&options).unwrap();
+    compile(input, js_options)
 }
 
 #[derive(Serialize)]
@@ -215,7 +257,7 @@ pub fn _test_verifier(input: &str) -> JsValue {
 #[derive(Serialize)]
 struct ParserTestResult {
     ast: ast::AstNode,
-    errors: Vec<String>,
+    errors: Vec<SnowFallError>,
 }
 
 /// 構文解析器の出力をテストするための関数。

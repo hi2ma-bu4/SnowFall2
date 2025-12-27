@@ -34,7 +34,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, PartialEq)]
 pub enum OpCode {
     // Stack operations
-    PushConst(u32), // Push a constant from the table onto the stack
+    PushConst(u32),
     Pop,
 
     // Arithmetic & Logic
@@ -46,25 +46,23 @@ pub enum OpCode {
     Equals,
 
     // Control Flow
-    Jump(u32),        // Unconditional jump to instruction index
-    JumpIfFalse(u32), // Pop stack; if false, jump to index
+    Jump(usize),
+    JumpIfFalse(usize),
 
     // Variables & Scope
-    SetGlobal(u32),
-    GetGlobal(u32),
+    SetVar(u32),
+    GetVar(u32),
 
     // Functions
-    Call(u8), // Call a function with `n` arguments
+    Call(u8),
     Return,
-
-    // Special
-    RecursionCheck, // Injected at the start of functions
 }
 
+use crate::common::sir::SymbolEntry;
 pub struct CodeGenerator {
     pub instructions: Vec<Instruction>,
     pub constants: Vec<SnowValue>,
-    // Other state: debug info, etc.
+    pub symbols: HashMap<String, u32>,
 }
 
 impl CodeGenerator {
@@ -72,19 +70,39 @@ impl CodeGenerator {
         CodeGenerator {
             instructions: Vec::new(),
             constants: Vec::new(),
+            symbols: HashMap::new(),
         }
+    }
+
+    fn add_symbol(&mut self, name: String) -> u32 {
+        if let Some(&index) = self.symbols.get(&name) {
+            return index;
+        }
+        let index = self.symbols.len() as u32;
+        self.symbols.insert(name, index);
+        index
     }
 
     pub fn generate(&mut self, node: &AstNode) -> Sir {
         self.visit_node(node);
 
         // Finalize SIR structure
+        let mut symbols_vec: Vec<_> = self.symbols.iter().collect();
+        symbols_vec.sort_by_key(|&(_, v)| v);
+
         Sir {
             header: Header {
                 sir_version: "1.0".to_string(),
                 debug_enabled: false,
                 source_hash: None,
             },
+            symbols: symbols_vec
+                .into_iter()
+                .map(|(name, &index)| SymbolEntry {
+                    index,
+                    name: name.clone(),
+                })
+                .collect(),
             constants: self
                 .constants
                 .iter()
@@ -109,8 +127,10 @@ impl CodeGenerator {
             OpCode::PushConst(idx) => ("PUSH_CONST".to_string(), vec![idx]),
             OpCode::Pop => ("POP".to_string(), vec![]),
             OpCode::Add => ("ADD".to_string(), vec![]),
-            OpCode::Jump(addr) => ("JUMP".to_string(), vec![addr]),
-            OpCode::JumpIfFalse(addr) => ("JUMP_IF_FALSE".to_string(), vec![addr]),
+            OpCode::SetVar(idx) => ("SET_VAR".to_string(), vec![idx]),
+            OpCode::Return => ("RETURN".to_string(), vec![]),
+            OpCode::Jump(addr) => ("JUMP".to_string(), vec![addr as u32]),
+            OpCode::JumpIfFalse(addr) => ("JUMP_IF_FALSE".to_string(), vec![addr as u32]),
             _ => ("UNKNOWN".to_string(), vec![]),
         };
 
@@ -141,12 +161,51 @@ impl Visitor for CodeGenerator {
 
     fn visit_statement(&mut self, stmt: &Statement) {
         match stmt {
+            Statement::Let { name, value, .. } => {
+                let symbol_index = self.add_symbol(name.clone());
+                self.visit_expression(value);
+                self.emit(OpCode::SetVar(symbol_index));
+            }
             Statement::Expression(expr) => {
                 self.visit_expression(expr);
-                // Expressions as statements should have their result popped
                 self.emit(OpCode::Pop);
             }
-            _ => {}
+            Statement::If {
+                condition,
+                consequence,
+                ..
+            } => {
+                self.visit_expression(condition);
+                let jump_if_false_pos = self.emit(OpCode::JumpIfFalse(999)); // Placeholder
+                self.visit_statement(consequence);
+
+                let after_consequence_pos = self.instructions.len();
+                self.instructions[jump_if_false_pos].operands[0] = after_consequence_pos as u32;
+            }
+            Statement::Block(statements) => {
+                for s in statements {
+                    self.visit_statement(s);
+                }
+            }
+            Statement::Function { body, .. } => {
+                self.visit_statement(body);
+                // Implicitly return if the last instruction isn't already a return.
+                if self.instructions.last().map(|i| i.opcode.as_str()) != Some("RETURN") {
+                    self.emit(OpCode::PushConst(u32::MAX)); // Placeholder for void/null
+                    self.emit(OpCode::Return);
+                }
+            }
+            Statement::Sub { body, .. } => {
+                self.visit_statement(body);
+                if self.instructions.last().map(|i| i.opcode.as_str()) != Some("RETURN") {
+                    self.emit(OpCode::PushConst(u32::MAX)); // Placeholder for void/null
+                    self.emit(OpCode::Return);
+                }
+            }
+            Statement::Return(expr) => {
+                self.visit_expression(expr);
+                self.emit(OpCode::Return);
+            }
         }
     }
 
@@ -154,6 +213,18 @@ impl Visitor for CodeGenerator {
         match expr {
             Expression::IntLiteral(val) => {
                 let const_idx = self.add_constant(SnowValue::Int(*val as i32));
+                self.emit(OpCode::PushConst(const_idx));
+            }
+            Expression::FloatLiteral(val) => {
+                let const_idx = self.add_constant(SnowValue::Float(*val));
+                self.emit(OpCode::PushConst(const_idx));
+            }
+            Expression::StringLiteral(val) => {
+                let const_idx = self.add_constant(SnowValue::String(val.clone()));
+                self.emit(OpCode::PushConst(const_idx));
+            }
+            Expression::Boolean(val) => {
+                let const_idx = self.add_constant(SnowValue::Boolean(*val));
                 self.emit(OpCode::PushConst(const_idx));
             }
             Expression::Infix {

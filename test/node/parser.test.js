@@ -66,6 +66,6 @@ test("Parser Functionality", async (t) => {
 		const input = "function Int main( { return 0; }"; // Missing parenthesis
 		const result = wasm._test_parser(input);
 		assert(result.errors.length > 0, "Parser should report errors for invalid syntax.");
-		assert(result.errors[0].includes("expected next token to be RParen"), "Error message should be about missing parenthesis.");
+		assert(result.errors[0].message.includes("expected next token to be RParen"), "Error message should be about missing parenthesis.");
 	});
 });
