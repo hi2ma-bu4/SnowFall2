@@ -294,14 +294,15 @@ export function allocate_memory(size) {
 }
 
 /**
- * Compiles SnowFall source code into SIR.
- * @param {string} input
+ * Compiles SnowFall source code into SIR plain-text format.
+ * @param {string} source
+ * @param {any} options
  * @returns {any}
  */
-export function compile(input) {
-    const ptr0 = passStringToWasm0(input, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+export function compile(source, options) {
+    const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.compile(ptr0, len0);
+    const ret = wasm.compile(ptr0, len0, options);
     return ret;
 }
 

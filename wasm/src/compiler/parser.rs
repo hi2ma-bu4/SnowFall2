@@ -70,11 +70,13 @@ fn token_to_precedence(token: &Token) -> Precedence {
 ///
 /// This approach provides a much better user experience by presenting a complete list of
 /// syntax issues at once, which is more efficient than forcing the user to fix errors one by one.
+use crate::common::error::SnowFallError;
+
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
     cur_token: Token,
     peek_token: Token,
-    pub errors: Vec<String>,
+    pub errors: Vec<SnowFallError>,
 }
 
 impl<'a> Parser<'a> {
@@ -154,8 +156,14 @@ impl<'a> Parser<'a> {
                 }
             }
             _ => {
-                self.errors
-                    .push(format!("No prefix parse function for {:?}", self.cur_token));
+                let msg = format!("No prefix parse function for {:?}", self.cur_token);
+                self.errors.push(SnowFallError::new(
+                    "ParseError".to_string(),
+                    msg,
+                    "SF003".to_string(),
+                    self.lexer.line,
+                    self.lexer.column,
+                ));
                 return None;
             }
         };
@@ -216,9 +224,13 @@ impl<'a> Parser<'a> {
         let type_name = match self.cur_token.clone() {
             Token::Ident(name) => name,
             _ => {
-                self.errors.push(format!(
-                    "Expected type name in cast, got {:?}",
-                    self.cur_token
+                let msg = format!("Expected type name in cast, got {:?}", self.cur_token);
+                self.errors.push(SnowFallError::new(
+                    "ParseError".to_string(),
+                    msg,
+                    "SF004".to_string(),
+                    self.lexer.line,
+                    self.lexer.column,
                 ));
                 return None;
             }
@@ -253,7 +265,13 @@ impl<'a> Parser<'a> {
 
         if !self.expect_peek(Token::Ident("".into())) {
             // Expect return type
-            self.errors.push("Expected return type.".into());
+            self.errors.push(SnowFallError::new(
+                "ParseError".to_string(),
+                "Expected return type.".to_string(),
+                "SF005".to_string(),
+                self.lexer.line,
+                self.lexer.column,
+            ));
             return None;
         }
         let return_type = match self.cur_token.clone() {
@@ -263,7 +281,13 @@ impl<'a> Parser<'a> {
 
         if !self.expect_peek(Token::Ident("".into())) {
             // Expect function name
-            self.errors.push("Expected function name.".into());
+            self.errors.push(SnowFallError::new(
+                "ParseError".to_string(),
+                "Expected function name.".to_string(),
+                "SF006".to_string(),
+                self.lexer.line,
+                self.lexer.column,
+            ));
             return None;
         }
         let name = match self.cur_token.clone() {
@@ -297,7 +321,13 @@ impl<'a> Parser<'a> {
     fn parse_sub_statement(&mut self) -> Option<Statement> {
         if !self.expect_peek(Token::Ident("".into())) {
             // Expect sub name
-            self.errors.push("Expected sub name.".into());
+            self.errors.push(SnowFallError::new(
+                "ParseError".to_string(),
+                "Expected sub name.".to_string(),
+                "SF007".to_string(),
+                self.lexer.line,
+                self.lexer.column,
+            ));
             return None;
         }
         let name = match self.cur_token.clone() {
@@ -460,9 +490,16 @@ impl<'a> Parser<'a> {
     }
 
     fn peek_error(&mut self, t: &Token) {
-        self.errors.push(format!(
+        let msg = format!(
             "expected next token to be {:?}, got {:?} instead",
             t, self.peek_token
+        );
+        self.errors.push(SnowFallError::new(
+            "ParseError".to_string(),
+            msg,
+            "SF002".to_string(), // Generic parse error code
+            self.lexer.line,
+            self.lexer.column,
         ));
     }
 

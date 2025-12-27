@@ -1,6 +1,7 @@
+import { SnowFallCompiler } from "./compiler";
 import { SnowFallErrorData } from "./errors";
 import * as wasm from "../pkg/snowfall_core.js";
-type WasmModule = typeof wasm & {
+export type WasmModule = typeof wasm & {
     memory: WebAssembly.Memory;
 };
 /**
@@ -31,6 +32,7 @@ export interface HostResponse {
 /**
  * SnowFall言語の検証、コンパイル、実行を管理するメインクラス。
  */
+export { SnowFallCompiler, SnowFallCompilerError } from "./compiler";
 export declare class SnowFall {
     private wasm;
     private isInitialized;
@@ -70,6 +72,10 @@ export declare class SnowFall {
      * テスト用にハンドルからプロキシを作成する。
      */
     _test_create_proxy_from_handle(handle: SnowFallHandle): any;
+    /**
+     * Returns a compiler instance.
+     * @returns A new SnowFallCompiler instance.
+     */
+    getCompiler(): SnowFallCompiler;
 }
-export {};
 //# sourceMappingURL=snowfall.d.ts.map

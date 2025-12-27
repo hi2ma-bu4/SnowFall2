@@ -117,11 +117,13 @@ impl Visitor for TypeChecker {
                 // A simplified type mapping
                 let declared_type = match type_name.as_str() {
                     "Int" => Type::Int,
+                    "Float" => Type::Float,
                     "String" => Type::String,
+                    "Boolean" => Type::Boolean,
                     _ => Type::Any,
                 };
 
-                if declared_type != val_type {
+                if declared_type != Type::Any && declared_type != val_type {
                     // This check is too simple for a real language, but works for now.
                     // For example, it doesn't handle subtypes.
                     self.errors.push(SnowFallError::new(
