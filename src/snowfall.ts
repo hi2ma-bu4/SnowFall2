@@ -1,3 +1,4 @@
+import { SnowFallCompiler } from "./compiler";
 import { SnowFallErrorData } from "./errors";
 
 // wasm-packが生成したJSと型定義をインポートします。
@@ -6,7 +7,7 @@ import { SnowFallErrorData } from "./errors";
 import init, * as wasm from "../pkg/snowfall_core.js";
 
 // `wasm`名前空間に`memory`が存在することをTypeScriptに伝えるための型拡張
-type WasmModule = typeof wasm & { memory: WebAssembly.Memory };
+export type WasmModule = typeof wasm & { memory: WebAssembly.Memory };
 
 /**
  * Wasmのメモリ内にある大規模なオブジェクトへの参照を表すインターフェース。
@@ -102,6 +103,8 @@ class SnowFallDictionaryProxy {
 /**
  * SnowFall言語の検証、コンパイル、実行を管理するメインクラス。
  */
+export { SnowFallCompiler, SnowFallCompilerError } from "./compiler";
+
 export class SnowFall {
 	private wasm: WasmModule | null = null;
 	private isInitialized = false;
@@ -319,5 +322,14 @@ export class SnowFall {
 
 		this.handleRegistry.register(proxy, handle.id);
 		return proxy;
+	}
+
+	/**
+	 * Returns a compiler instance.
+	 * @returns A new SnowFallCompiler instance.
+	 */
+	public getCompiler(): SnowFallCompiler {
+		const wasm = this.ensureInitialized();
+		return new SnowFallCompiler(wasm);
 	}
 }
