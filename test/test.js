@@ -74,4 +74,53 @@ test("SnowFall Language Core Features", async (t) => {
 		const valB = await proxy.b;
 		assert.deepStrictEqual(valB.data, { Boolean: true });
 	});
+
+	// サブテスト: 暗黙の型変換 (==)
+	await t.test("Implicit Type Conversion", () => {
+		// String > Float
+		assert.strictEqual(wasm._test_implicit_comparison({ String: "1.23" }, { Float: 1.23 }), true);
+		// Float > Int
+		assert.strictEqual(wasm._test_implicit_comparison({ Float: 123.0 }, { Int: 123 }), true);
+		// Int > Char
+		assert.strictEqual(wasm._test_implicit_comparison({ Int: 65 }, { Char: 'A' }), true);
+		// Char > Boolean
+		assert.strictEqual(wasm._test_implicit_comparison({ Char: '\u0001' }, { Boolean: true }), true); // non-zero char is true
+		// String > Boolean
+		assert.strictEqual(wasm._test_implicit_comparison({ String: "true" }, { Boolean: true }), true);
+		// 異なる型だが変換できない -> false
+		assert.strictEqual(wasm._test_implicit_comparison({ String: "abc" }, { Int: 123 }), false);
+		// 複雑な型同士 -> false
+		assert.strictEqual(wasm._test_implicit_comparison({ Array: [] }, { Array: [] }), false);
+	});
+
+	// サブテスト: ホスト関数インターフェース (TS/Wasm連携)
+	await t.test("Host Function Interface", async () => {
+		// テスト用のホスト関数を登録
+		snowfall.registerHostFunction("testing.add", (a, b) => {
+			if (typeof a !== "number" || typeof b !== "number") {
+				throw new Error("Invalid arguments for testing.add");
+			}
+			return a + b;
+		});
+
+		const request = {
+			operation: "testing.add",
+			args: [
+				{ type_id: 2, data: { Int: 10 } },
+				{ type_id: 3, data: { Float: 5.5 } },
+			],
+			requires_return: true,
+		};
+
+		const response = await snowfall.invokeHostFunction(request);
+
+		assert.strictEqual(response.status, "OK");
+		// 10 + 5.5 = 15.5 (Float)
+		assert.deepStrictEqual(response.result, {
+			type_id: 3,
+			data: { Float: 15.5 },
+			properties: {},
+			version: 0,
+		});
+	});
 });

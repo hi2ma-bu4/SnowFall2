@@ -10,6 +10,7 @@ __export(snowfall_core_exports, {
   _test_create_array_handle: () => _test_create_array_handle,
   _test_create_dictionary_handle: () => _test_create_dictionary_handle,
   _test_error_propagation: () => _test_error_propagation,
+  _test_implicit_comparison: () => _test_implicit_comparison,
   _test_prototype_lookup: () => _test_prototype_lookup,
   _test_static_validation: () => _test_static_validation,
   allocate_memory: () => allocate_memory,
@@ -147,6 +148,11 @@ function passStringToWasm0(arg, malloc, realloc) {
   WASM_VECTOR_LEN = offset;
   return ptr;
 }
+function takeFromExternrefTable0(idx) {
+  const value = wasm.__wbindgen_externrefs.get(idx);
+  wasm.__externref_table_dealloc(idx);
+  return value;
+}
 var cachedTextDecoder = new TextDecoder("utf-8", { ignoreBOM: true, fatal: true });
 cachedTextDecoder.decode();
 var MAX_SAFARI_DECODE_BYTES = 2146435072;
@@ -183,6 +189,13 @@ function _test_create_dictionary_handle() {
 function _test_error_propagation() {
   const ret = wasm._test_error_propagation();
   return ret;
+}
+function _test_implicit_comparison(left, right) {
+  const ret = wasm._test_implicit_comparison(left, right);
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1]);
+  }
+  return ret[0] !== 0;
 }
 function _test_prototype_lookup(key) {
   const ptr0 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -615,11 +628,14 @@ var SnowFall = class {
   wasm = null;
   isInitialized = false;
   handleRegistry;
+  hostFunctions;
   constructor() {
     this.handleRegistry = new FinalizationRegistry((handleId) => {
       this.wasm?.release_handle(handleId);
       console.log(`Released handle: ${handleId}`);
     });
+    this.hostFunctions = /* @__PURE__ */ new Map();
+    this.registerHostFunction("console.log", (...args) => console.log(...args));
   }
   async init(wasmUrl) {
     if (this.isInitialized) {
@@ -640,6 +656,156 @@ var SnowFall = class {
       throw new Error("SnowFall has not been initialized. Please call init() first.");
     }
     return this.wasm;
+  }
+  /**
+   * Rustから呼び出すためのTypeScript関数を登録します。
+   * @param name 登録名 (例: "my_library.my_function")
+   * @param func 実行する関数
+   */
+  registerHostFunction(name, func) {
+    this.hostFunctions.set(name, func);
+  }
+  /**
+   * Wasmからの要求に応じてホスト関数を呼び出します。
+   * @param request Wasmから渡されるHostRequestオブジェクト
+   * @returns 実行結果を含むHostResponseオブジェクト
+   */
+  async invokeHostFunction(request) {
+    const func = this.hostFunctions.get(request.operation);
+    if (!func) {
+      return {
+        status: "ERROR",
+        error_info: {
+          type: "RuntimeError",
+          message: `Host function '${request.operation}' not found.`,
+          code: "SF501",
+          line: 0,
+          // Wasmからの呼び出しのため、行情報は別途渡す必要がある
+          column: 0,
+          trace: []
+        }
+      };
+    }
+    try {
+      const nativeArgs = request.args.map((arg) => this.deserializeSnowValue(arg));
+      const result = await func(...nativeArgs);
+      if (request.requires_return) {
+        return {
+          status: "OK",
+          result: this.serializeTsValue(result)
+        };
+      } else {
+        return { status: "OK" };
+      }
+    } catch (e) {
+      return {
+        status: "ERROR",
+        error_info: {
+          type: "RuntimeError",
+          message: e.message || "An unexpected error occurred in host function.",
+          code: "SF502",
+          line: 0,
+          column: 0,
+          trace: e.stack ? e.stack.split("\n") : []
+        }
+      };
+    }
+  }
+  /**
+   * Wasmから渡された `SnowObject` (のJSON表現) をTypeScriptのネイティブ型に
+   * 再帰的に変換します。`SnowFallHandle`はプロキシオブジェクトに変換されます。
+   *
+   * @param value 変換対象の `SnowObject`
+   * @returns TypeScriptのネイティブ値
+   */
+  deserializeSnowValue(value) {
+    if (value === null || typeof value !== "object") {
+      return value;
+    }
+    if (value.__type === "SnowFallHandle") {
+      return this._test_create_proxy_from_handle(value);
+    }
+    const data = value.data;
+    if (data === "Void") {
+      return void 0;
+    }
+    if (typeof data !== "object" || data === null) {
+      return data;
+    }
+    const key = Object.keys(data)[0];
+    const val = data[key];
+    switch (key) {
+      case "Int":
+      case "Long":
+      case "Float":
+      case "Char":
+      case "String":
+      case "Boolean":
+        return val;
+      case "Array":
+        return val.map((item) => this.deserializeSnowValue(item));
+      case "Dictionary": {
+        const map = /* @__PURE__ */ new Map();
+        for (const [k, v] of Object.entries(val)) {
+          map.set(k, this.deserializeSnowValue(v));
+        }
+        return map;
+      }
+    }
+    return value;
+  }
+  /**
+   * TypeScriptのネイティブ値を、Wasmが期待する `SnowObject` (のJSON表現) に
+   * 再帰的にシリアライズします。
+   * @param value シリアライズ対象のTypeScript値
+   * @returns `SnowObject` のJSON表現
+   */
+  serializeTsValue(value) {
+    let type_id;
+    let data;
+    if (value === null || value === void 0) {
+      type_id = 1;
+      data = "Void";
+    } else {
+      switch (typeof value) {
+        case "string":
+          type_id = 4;
+          data = { String: value };
+          break;
+        case "number":
+          if (Number.isInteger(value)) {
+            type_id = 2;
+            data = { Int: value };
+          } else {
+            type_id = 3;
+            data = { Float: value };
+          }
+          break;
+        case "boolean":
+          type_id = 5;
+          data = { Boolean: value };
+          break;
+        case "object":
+          if (Array.isArray(value)) {
+            type_id = 6;
+            data = { Array: value.map((v) => this.serializeTsValue(v)) };
+          } else {
+            type_id = 7;
+            const dict = {};
+            const entries = value instanceof Map ? value.entries() : Object.entries(value);
+            for (const [k, v] of entries) {
+              dict[String(k)] = this.serializeTsValue(v);
+            }
+            data = { Dictionary: dict };
+          }
+          break;
+        default:
+          type_id = 1;
+          data = "Void";
+          break;
+      }
+    }
+    return { type_id, data, properties: {}, version: 0 };
   }
   /**
    * テスト用にハンドルからプロキシを作成する。

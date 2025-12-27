@@ -17,6 +17,11 @@ export function _test_create_dictionary_handle(): any;
 export function _test_error_propagation(): any;
 
 /**
+ * 暗黙の型変換を伴う比較ロジックをテストするための関数。
+ */
+export function _test_implicit_comparison(left: any, right: any): boolean;
+
+/**
  * プロトタイプチェーン検索をテストするための一時的な関数。
  */
 export function _test_prototype_lookup(key: string): any;
@@ -65,24 +70,26 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly main_init: () => void;
-  readonly allocate_memory: (a: number) => number;
-  readonly free_memory: (a: number, b: number) => void;
-  readonly get_element_by_handle: (a: number, b: any) => any;
-  readonly set_element_by_handle: (a: number, b: any, c: any) => void;
-  readonly release_handle: (a: number) => void;
-  readonly find_property_on_prototype: (a: any, b: number, c: number) => any;
-  readonly _test_static_validation: (a: number, b: number, c: number) => any;
-  readonly _test_error_propagation: () => any;
-  readonly _test_prototype_lookup: (a: number, b: number) => any;
   readonly _test_create_array_handle: () => any;
   readonly _test_create_dictionary_handle: () => any;
+  readonly _test_error_propagation: () => any;
+  readonly _test_implicit_comparison: (a: any, b: any) => [number, number, number];
+  readonly _test_prototype_lookup: (a: number, b: number) => any;
+  readonly _test_static_validation: (a: number, b: number, c: number) => any;
+  readonly allocate_memory: (a: number) => number;
+  readonly find_property_on_prototype: (a: any, b: number, c: number) => any;
+  readonly free_memory: (a: number, b: number) => void;
+  readonly get_element_by_handle: (a: number, b: any) => any;
+  readonly main_init: () => void;
+  readonly release_handle: (a: number) => void;
+  readonly set_element_by_handle: (a: number, b: any, c: any) => void;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_exn_store: (a: number) => void;
   readonly __externref_table_alloc: () => number;
   readonly __wbindgen_externrefs: WebAssembly.Table;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+  readonly __externref_table_dealloc: (a: number) => void;
   readonly __wbindgen_start: () => void;
 }
 

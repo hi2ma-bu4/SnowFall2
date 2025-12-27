@@ -35,9 +35,37 @@ export declare class SnowFall {
     private wasm;
     private isInitialized;
     private handleRegistry;
+    private hostFunctions;
     constructor();
     init(wasmUrl: string | ArrayBuffer): Promise<void>;
     ensureInitialized(): WasmModule;
+    /**
+     * Rustから呼び出すためのTypeScript関数を登録します。
+     * @param name 登録名 (例: "my_library.my_function")
+     * @param func 実行する関数
+     */
+    registerHostFunction(name: string, func: Function): void;
+    /**
+     * Wasmからの要求に応じてホスト関数を呼び出します。
+     * @param request Wasmから渡されるHostRequestオブジェクト
+     * @returns 実行結果を含むHostResponseオブジェクト
+     */
+    invokeHostFunction(request: HostRequest): Promise<HostResponse>;
+    /**
+     * Wasmから渡された `SnowObject` (のJSON表現) をTypeScriptのネイティブ型に
+     * 再帰的に変換します。`SnowFallHandle`はプロキシオブジェクトに変換されます。
+     *
+     * @param value 変換対象の `SnowObject`
+     * @returns TypeScriptのネイティブ値
+     */
+    private deserializeSnowValue;
+    /**
+     * TypeScriptのネイティブ値を、Wasmが期待する `SnowObject` (のJSON表現) に
+     * 再帰的にシリアライズします。
+     * @param value シリアライズ対象のTypeScript値
+     * @returns `SnowObject` のJSON表現
+     */
+    private serializeTsValue;
     /**
      * テスト用にハンドルからプロキシを作成する。
      */

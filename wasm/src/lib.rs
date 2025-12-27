@@ -16,18 +16,15 @@ extern crate lazy_static;
 // `console.error` を介してパニック情報を表示するためのフック
 extern crate console_error_panic_hook;
 
-// モジュールをインラインで宣言
-pub mod common {
-    pub mod object;
-    pub mod error;
-    pub mod sir;
-}
+// モジュールを宣言
+pub mod common;
 pub mod compiler {
     pub mod validator;
 }
 
 use crate::common::object::{SnowObject, SnowValue, TypeId};
 use crate::common::error::SnowFallError;
+use crate::common::operator::implicit_comparison_equal;
 use crate::compiler::validator::{validate_property_access, TypeDefinition, TypeSystem};
 
 // グローバルなライブオブジェクトテーブル。
@@ -266,6 +263,18 @@ pub fn _test_create_array_handle() -> JsValue {
     js_sys::Reflect::set(&handle, &"size".into(), &2.into()).unwrap();
 
     handle.into()
+}
+
+/// 暗黙の型変換を伴う比較ロジックをテストするための関数。
+#[wasm_bindgen]
+pub fn _test_implicit_comparison(left: JsValue, right: JsValue) -> Result<bool, JsValue> {
+    let left_val: SnowValue = serde_wasm_bindgen::from_value(left)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+    let right_val: SnowValue = serde_wasm_bindgen::from_value(right)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    implicit_comparison_equal(&left_val, &right_val)
+        .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap_or(JsValue::NULL))
 }
 
 /// テスト用のディクショナリハンドルを作成して返す。
