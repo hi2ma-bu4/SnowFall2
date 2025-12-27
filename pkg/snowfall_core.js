@@ -147,6 +147,12 @@ function passStringToWasm0(arg, malloc, realloc) {
     return ptr;
 }
 
+function takeFromExternrefTable0(idx) {
+    const value = wasm.__wbindgen_externrefs.get(idx);
+    wasm.__externref_table_dealloc(idx);
+    return value;
+}
+
 let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
 cachedTextDecoder.decode();
 const MAX_SAFARI_DECODE_BYTES = 2146435072;
@@ -201,6 +207,20 @@ export function _test_create_dictionary_handle() {
 export function _test_error_propagation() {
     const ret = wasm._test_error_propagation();
     return ret;
+}
+
+/**
+ * 暗黙の型変換を伴う比較ロジックをテストするための関数。
+ * @param {any} left
+ * @param {any} right
+ * @returns {boolean}
+ */
+export function _test_implicit_comparison(left, right) {
+    const ret = wasm._test_implicit_comparison(left, right);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return ret[0] !== 0;
 }
 
 /**

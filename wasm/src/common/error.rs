@@ -55,4 +55,31 @@ impl SnowFallError {
             context: None,
         }
     }
+
+    /// `RuntimeError` 型の `SnowFallError` を生成するためのファクトリ関数。
+    /// この関数は、動的にキャプチャされたスタックトレースを受け取り、
+    /// エラーオブジェクトに含めることができます。これにより、WasmからTSへ
+    /// 詳細な実行時エラー情報を渡すことが可能になります。
+    ///
+    /// A factory function to create a `SnowFallError` of type `RuntimeError`.
+    /// This function accepts a dynamically captured stack trace and includes it
+    /// in the error object, enabling detailed runtime error information to be
+    /// passed from Wasm to TS.
+    pub fn new_runtime_error(
+        message: String,
+        code: String,
+        line: u32,
+        column: u32,
+        trace: Vec<String>,
+    ) -> Self {
+        Self {
+            r#type: "RuntimeError".to_string(),
+            message,
+            code,
+            line,
+            column,
+            trace,
+            context: None,
+        }
+    }
 }
