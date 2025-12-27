@@ -9,7 +9,7 @@ pub type SnowFallErrorContext = HashMap<String, String>;
 /// この構造体はシリアライズされ、Wasm境界を越えてTypeScript側に渡されます。
 /// The struct representing all errors in the SnowFall language.
 /// This struct is serialized and passed across the Wasm boundary to the TypeScript side.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SnowFallError {
     /// エラーの種類 (例: "CompilationError", "RuntimeError")。
     /// The type of the error (e.g., "CompilationError", "RuntimeError").

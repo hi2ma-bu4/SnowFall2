@@ -21,7 +21,7 @@ pub struct ConstantEntry {
 
 /// 単一のオペコードとオペランドを表す命令。
 /// An instruction representing a single opcode and its operands.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Instruction {
     pub index: u32,
     pub opcode: String,

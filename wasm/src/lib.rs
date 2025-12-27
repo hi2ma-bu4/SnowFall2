@@ -18,14 +18,15 @@ extern crate console_error_panic_hook;
 
 // モジュールを宣言
 pub mod common;
-pub mod compiler {
-    pub mod validator;
-}
+pub mod compiler;
 
 use crate::common::object::{SnowObject, SnowValue, TypeId};
 use crate::common::error::SnowFallError;
 use crate::common::operator::implicit_comparison_equal;
-use crate::compiler::validator::{validate_property_access, TypeDefinition, TypeSystem};
+use crate::compiler::{CodeGenerator, Lexer, Parser, Token};
+use crate::compiler::validator::{self, TypeChecker};
+use serde::Serialize;
+use crate::compiler::ast;
 
 // グローバルなライブオブジェクトテーブル。
 lazy_static! {
@@ -165,35 +166,87 @@ pub fn find_property_on_prototype(obj: JsValue, key: String) -> JsValue {
     }
 }
 
+/// Compiles SnowFall source code into SIR.
+#[wasm_bindgen]
+pub fn compile(input: &str) -> JsValue {
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let ast = parser.parse_program();
+
+    // TODO: Add verification step
+
+    let mut codegen = CodeGenerator::new();
+    let sir = codegen.generate(&ast);
+
+    serde_wasm_bindgen::to_value(&sir).unwrap()
+}
+
+
 // --- Test Functions ---
 
-/// 静的検証ロジックをテストするための関数。
+/// コード生成器の出力をテストするための関数。
 #[wasm_bindgen]
-pub fn _test_static_validation(type_id: TypeId, property_name: String) -> JsValue {
-    let mut type_system = TypeSystem::new();
-    let mut grandparent_props = HashMap::new();
-    grandparent_props.insert("grandparent_prop".to_string(), 100);
-    type_system.insert(1, TypeDefinition {
-        properties: grandparent_props,
-        __proto__: None,
-    });
-    let mut parent_props = HashMap::new();
-    parent_props.insert("parent_prop".to_string(), 101);
-    type_system.insert(2, TypeDefinition {
-        properties: parent_props,
-        __proto__: Some(1),
-    });
-    let mut child_props = HashMap::new();
-    child_props.insert("child_prop".to_string(), 102);
-    type_system.insert(3, TypeDefinition {
-        properties: child_props,
-        __proto__: Some(2),
-    });
+pub fn _test_codegen(input: &str) -> JsValue {
+    compile(input)
+}
 
-    match validate_property_access(&type_system, type_id, &property_name) {
-        Ok(_) => JsValue::from_str("Validation successful"),
-        Err(e) => propagate_error(e),
+
+#[derive(Serialize)]
+struct VerifierTestResult {
+    errors: Vec<common::error::SnowFallError>,
+}
+
+/// 静的型検証器の出力をテストするための関数。
+#[wasm_bindgen]
+pub fn _test_verifier(input: &str) -> JsValue {
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let ast = parser.parse_program();
+
+    // For now, we ignore parser errors and proceed
+    let mut type_checker = TypeChecker::new();
+    let _ = type_checker.check(&ast);
+
+    let result = VerifierTestResult {
+        errors: type_checker.errors,
+    };
+
+    serde_wasm_bindgen::to_value(&result).unwrap()
+}
+
+#[derive(Serialize)]
+struct ParserTestResult {
+    ast: ast::AstNode,
+    errors: Vec<String>,
+}
+
+/// 構文解析器の出力をテストするための関数。
+#[wasm_bindgen]
+pub fn _test_parser(input: &str) -> JsValue {
+    let lexer = Lexer::new(input);
+    let mut parser = Parser::new(lexer);
+    let ast = parser.parse_program();
+    let result = ParserTestResult {
+        ast,
+        errors: parser.errors,
+    };
+    serde_wasm_bindgen::to_value(&result).unwrap()
+}
+
+/// 字句解析器の出力をテストするための関数。
+#[wasm_bindgen]
+pub fn _test_lexer(input: &str) -> JsValue {
+    let mut lexer = Lexer::new(input);
+    let mut tokens = Vec::new();
+    loop {
+        let token = lexer.next_token();
+        if token == Token::Eof {
+            tokens.push(token);
+            break;
+        }
+        tokens.push(token);
     }
+    serde_wasm_bindgen::to_value(&tokens).unwrap()
 }
 
 /// エラー伝播をテストするための一時的な関数。

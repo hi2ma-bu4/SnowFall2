@@ -14,18 +14,6 @@ test("SnowFall Language Core Features", async (t) => {
 	await snowfall.init(wasmBuffer);
 	const wasm = snowfall.ensureInitialized();
 
-	// サブテスト: 静的検証
-	await t.test("Static Validation", () => {
-		// Child (ID: 3) は grandparent_prop を持つはず
-		const result1 = wasm._test_static_validation(3, "grandparent_prop");
-		assert.strictEqual(result1, "Validation successful");
-
-		// 存在しないプロパティはエラーになるはず
-		const result2 = wasm._test_static_validation(3, "non_existent_prop");
-		assert.strictEqual(result2.type, "CompilationError");
-		assert.strictEqual(result2.code, "SF020");
-	});
-
 	// サブテスト: エラー伝播
 	await t.test("Error Propagation", () => {
 		const error = wasm._test_error_propagation();
