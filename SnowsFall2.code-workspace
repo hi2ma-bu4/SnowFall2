@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"cSpell.words": [
+			"ahash",
+			"bindgen",
+			"codegen",
+			"hexdigit",
+			"serde",
+			"thiserror"
+		]
+	}
+}

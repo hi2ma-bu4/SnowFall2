@@ -1,0 +1,4 @@
+**/node_modules/**
+**/wasm/target/**
+
+*.log

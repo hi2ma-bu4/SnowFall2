@@ -1,0 +1,4 @@
+**/pkg/**   merge=theirs
+**/dist/**  merge=theirs
+
+*.js.map    merge=theirs
