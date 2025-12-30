@@ -197,6 +197,8 @@ impl<'a> Lexer<'a> {
                     "sub" => Token::Sub,
                     "class" => Token::Class,
                     "extends" => Token::Extends,
+                    "constructor" => Token::Constructor,
+                    "new" => Token::New,
                     "if" => Token::If,
                     "else" => Token::Else,
                     "for" => Token::For,
@@ -214,7 +216,7 @@ impl<'a> Lexer<'a> {
                     "null" => Token::Null,
                     "and" => Token::And,
                     "or" => Token::Or,
-                    _ => Token::Identifiers(ident),
+                    _ => Token::Identifier(ident),
                 };
             }
             0 => Token::Eof,
@@ -318,7 +320,7 @@ impl<'a> Lexer<'a> {
             return Token::Illegal(number_str);
         }
 
-        if dot_count == 1 {
+        if dot_count >= 1 {
             let (int_str, frac_str) = match number_str.split_once('.') {
                 Some(v) => v,
                 None => return Token::Illegal(number_str),
@@ -394,24 +396,20 @@ impl<'a> Lexer<'a> {
         }
 
         // 0xf.f のような16進浮動小数点数を処理します
-        if dot_count == 1 {
+        if dot_count >= 1 {
             // 基本的な16進浮動小数点解析 (例: "A.B" -> 10.6875)
             let (int_str, frac_str) = match number_str.split_once('.') {
                 Some(v) => v,
                 None => return Token::Illegal(number_str),
             };
 
-            if int_str.is_empty() && frac_str.is_empty() {
+            if int_str.is_empty() {
                 return Token::Illegal(number_str);
             }
 
-            let integer_part = if int_str.is_empty() {
-                0.0
-            } else {
-                match i64::from_str_radix(int_str, 16) {
-                    Ok(v) => v as f64,
-                    Err(_) => return Token::Illegal(number_str),
-                }
+            let integer_part = match i64::from_str_radix(int_str, 16) {
+                Ok(v) => v as f64,
+                Err(_) => return Token::Illegal(number_str),
             };
 
             let mut fractional_part: f64 = 0.0;
@@ -484,24 +482,20 @@ impl<'a> Lexer<'a> {
         }
 
         // 0b1.1 のような2進浮動小数点数を処理します
-        if dot_count == 1 {
+        if dot_count >= 1 {
             // 基本的な2進浮動小数点解析 (例: "1.1" -> 1.5)
             let (int_str, frac_str) = match number_str.split_once('.') {
                 Some(v) => v,
                 None => return Token::Illegal(number_str),
             };
 
-            if int_str.is_empty() && frac_str.is_empty() {
+            if int_str.is_empty() {
                 return Token::Illegal(number_str);
             }
 
-            let integer_part = if int_str.is_empty() {
-                0.0
-            } else {
-                match i64::from_str_radix(int_str, 2) {
-                    Ok(v) => v as f64,
-                    Err(_) => return Token::Illegal(number_str),
-                }
+            let integer_part = match i64::from_str_radix(int_str, 2) {
+                Ok(v) => v as f64,
+                Err(_) => return Token::Illegal(number_str),
             };
 
             let mut fractional_part: f64 = 0.0;
@@ -527,7 +521,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_string(&mut self) -> Token {
-        let quote_char = self.ch;
+        let quote_char: u8 = self.ch;
         self.read_char(); // skip opening '"' or '\''
         let position = self.position;
         let mut old_ch: u8 = 0;

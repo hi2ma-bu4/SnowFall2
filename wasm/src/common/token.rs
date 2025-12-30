@@ -9,7 +9,7 @@ pub enum Token {
     Illegal(String),
 
     // 識別子とリテラル (Identifiers & Literals)
-    Identifiers(String),
+    Identifier(String),
     Int(i64),
     Float(f64),
     String(String),
@@ -45,27 +45,29 @@ pub enum Token {
     RBracket,  // ]
 
     // キーワード (Keywords)
-    Function, // function
-    Sub,      // sub
-    Class,    // class
-    Extends,  // extends
-    If,       // if
-    Else,     // else
-    For,      // for
-    While,    // while
-    In,       // in
-    Of,       // of
-    Switch,   // switch
-    Case,     // case
-    Default,  // default
-    Break,    // break
-    Continue, // continue
-    Return,   // return
-    True,     // true
-    False,    // false
-    Null,     // null
-    And,      // and
-    Or,       // or
+    Function,    // function
+    Sub,         // sub
+    Class,       // class
+    Extends,     // extends
+    Constructor, // constructor
+    New,         // new
+    If,          // if
+    Else,        // else
+    For,         // for
+    While,       // while
+    In,          // in
+    Of,          // of
+    Switch,      // switch
+    Case,        // case
+    Default,     // default
+    Break,       // break
+    Continue,    // continue
+    Return,      // return
+    True,        // true
+    False,       // false
+    Null,        // null
+    And,         // and
+    Or,          // or
 
     // 論理演算子 (Logical Operators)
     LogicalAnd, // &&

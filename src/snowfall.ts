@@ -43,7 +43,7 @@ export class SnowFall {
 	 * @returns トークンの配列
 	 * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください。
 	 */
-	public dev_lexer(input: string): any {
+	public dev_lexer(input: string): Array<{ type: string; value?: string }> {
 		const wasm = this.ensureInitialized();
 		return wasm.lexer(input);
 	}

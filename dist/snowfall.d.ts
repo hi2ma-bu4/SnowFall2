@@ -15,7 +15,10 @@ export declare class SnowFall {
      * @returns トークンの配列
      * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください。
      */
-    dev_lexer(input: string): any;
+    dev_lexer(input: string): Array<{
+        type: string;
+        value?: string;
+    }>;
     private _logInfo;
 }
 //# sourceMappingURL=snowfall.d.ts.map
