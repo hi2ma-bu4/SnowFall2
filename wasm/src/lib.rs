@@ -9,7 +9,7 @@ extern crate console_error_panic_hook;
 pub mod common;
 pub mod compiler;
 
-use crate::common::Token;
+use crate::common::{constants, Token, TokenKind};
 use crate::compiler::Lexer;
 
 /// ライブラリの初期化時に一度だけ呼び出されるべき関数。
@@ -35,6 +35,11 @@ pub fn free_memory(ptr: *mut u8, size: usize) {
     }
 }
 
+#[wasm_bindgen]
+pub fn version() -> String {
+    constants::VERSION.to_string()
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct CompileOptions {
     pub debug_info: bool,
@@ -49,7 +54,7 @@ pub fn lexer(source: &str) -> Result<JsValue, JsValue> {
     let mut tokens: Vec<Token> = Vec::new();
 
     let mut cur_token = lexer.next_token();
-    while cur_token != Token::Eof {
+    while cur_token.kind != TokenKind::Eof {
         tokens.push(cur_token);
         cur_token = lexer.next_token();
     }

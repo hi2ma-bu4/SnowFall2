@@ -11,6 +11,8 @@ import process from "node:process";
 /** プロジェクトルート */
 const ROOT_DIR = process.cwd();
 
+const FILE_NAME = "snowfall";
+
 /** Rust (wasm-pack) プロジェクトのディレクトリ */
 const WASM_DIR = path.resolve(ROOT_DIR, "wasm");
 const WASM_FILE = "snowfall_core_bg.wasm";
@@ -22,7 +24,7 @@ const PKG_DIR = path.resolve(ROOT_DIR, "pkg");
 const DIST_DIR = path.resolve(ROOT_DIR, "dist");
 
 /** エントリーポイント */
-const ENTRY_FILE = path.resolve(ROOT_DIR, "src/snowfall.ts");
+const ENTRY_FILE = path.resolve(ROOT_DIR, `src/${FILE_NAME}.ts`);
 
 /** wasmファイルコピー用 */
 const WASM_SRC = path.join(PKG_DIR, WASM_FILE);
@@ -103,6 +105,17 @@ function shouldBuildWasm() {
 }
 
 /* -------------------------------------------------------------------------- */
+/* ts バージョン注入 */
+/* -------------------------------------------------------------------------- */
+function getVersion() {
+	const pkg = JSON.parse(fs.readFileSync(path.relative(ROOT_DIR, "package.json"), "utf8"));
+	const out = `/** 自動生成・編集禁止 */
+export const VERSION = ${JSON.stringify(pkg.version)} as const;
+`;
+	fs.writeFileSync("src/version.ts", out);
+}
+
+/* -------------------------------------------------------------------------- */
 /* esbuild */
 /* -------------------------------------------------------------------------- */
 
@@ -140,7 +153,7 @@ async function buildJs() {
 
 	await build({
 		...ESBUILD_COMMON,
-		entryNames: "snowfall",
+		entryNames: FILE_NAME,
 	});
 
 	console.log("┗✅ esbuild 完了");
@@ -151,7 +164,7 @@ async function buildJsMin() {
 
 	await build({
 		...ESBUILD_COMMON,
-		entryNames: "snowfall.min",
+		entryNames: `${FILE_NAME}.min`,
 		minify: true,
 	});
 
@@ -168,7 +181,7 @@ async function buildJsMin() {
 function buildTypes() {
 	console.log("📐 型定義(.d.ts)生成開始...");
 
-	runCommand("npx", ["tsc", "--emitDeclarationOnly", "--declaration", "--declarationMap", "--outDir", DIST_DIR, "--project", "tsconfig.json"], ROOT_DIR, "❌ 型定義の生成に失敗しました");
+	runCommand("npx", ["dts-bundle-generator", "-o", `${DIST_DIR}/${FILE_NAME}.d.ts`, ENTRY_FILE], ROOT_DIR, "❌ 型定義のバンドルに失敗しました");
 
 	console.log("┗✅ 型定義生成完了");
 }
@@ -254,6 +267,8 @@ function addDeprecatedToDts() {
 			buildWasm();
 			addDeprecatedToDts();
 		}
+
+		getVersion();
 
 		await Promise.all([
 			//

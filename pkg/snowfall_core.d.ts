@@ -21,6 +21,8 @@ export function free_memory(ptr: number, size: number): void;
  */
 export function main_init(): void;
 
+export function version(): string;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
@@ -28,6 +30,7 @@ export interface InitOutput {
   readonly main_init: () => void;
   readonly allocate_memory: (a: number) => number;
   readonly free_memory: (a: number, b: number) => void;
+  readonly version: () => [number, number];
   readonly lexer: (a: number, b: number) => [number, number, number];
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

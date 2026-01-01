@@ -12,7 +12,8 @@ __export(snowfall_core_exports, {
   free_memory: () => free_memory,
   initSync: () => initSync,
   lexer: () => lexer,
-  main_init: () => main_init
+  main_init: () => main_init,
+  version: () => version
 });
 var wasm;
 var cachedDataViewMemory0 = null;
@@ -112,6 +113,18 @@ function lexer(source) {
 function main_init() {
   wasm.main_init();
 }
+function version() {
+  let deferred1_0;
+  let deferred1_1;
+  try {
+    const ret = wasm.version();
+    deferred1_0 = ret[0];
+    deferred1_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+  }
+}
 var EXPECTED_RESPONSE_TYPES = /* @__PURE__ */ new Set(["basic", "cors", "default"]);
 async function __wbg_load(module, imports) {
   if (typeof Response === "function" && module instanceof Response) {
@@ -195,6 +208,10 @@ function __wbg_get_imports() {
     const ret = getStringFromWasm0(arg0, arg1);
     return ret;
   };
+  imports.wbg.__wbindgen_cast_4625c577ab2ec9ee = function(arg0) {
+    const ret = BigInt.asUintN(64, arg0);
+    return ret;
+  };
   imports.wbg.__wbindgen_cast_9ae0607507abb057 = function(arg0) {
     const ret = arg0;
     return ret;
@@ -259,6 +276,9 @@ async function __wbg_init(module_or_path) {
 }
 var snowfall_core_default = __wbg_init;
 
+// src/version.ts
+var VERSION = "v0.0.2";
+
 // src/snowfall.ts
 var SnowFall = class {
   _isDebug = false;
@@ -284,6 +304,22 @@ var SnowFall = class {
       throw new Error("SnowFall has not been initialized. Please call init() first.");
     }
     return this._wasm;
+  }
+  /* ================================================== */
+  /* 管理情報 */
+  /* ================================================== */
+  /**
+   * ts(js)ライブラリのバージョン取得
+   */
+  version() {
+    return VERSION;
+  }
+  /**
+   * rust(wasm)ライブラリのバージョン取得
+   */
+  version_wasm() {
+    const wasm2 = this.ensureInitialized();
+    return wasm2.version();
   }
   /* ================================================== */
   /* デバッグ用機能 */

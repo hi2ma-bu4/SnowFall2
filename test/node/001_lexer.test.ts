@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { test } from "node:test";
 
-import { SnowFall } from "../../dist/snowfall";
+import { KeywordToken, LiteralToken, SnowFall, type DelimiterToken, type OperatorToken } from "../../dist/snowfall";
 import { wasmBuffer } from "./lib/getWasm";
 
 test("Lexer Test", async (t) => {
@@ -36,7 +36,67 @@ test("Lexer Test", async (t) => {
 		}
 
 		for (let i = 0; i < tokens.length; i++) {
-			assert.strictEqual(tokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
+			assert.strictEqual(tokens[i].kind.type, "Operator");
+		}
+
+		const filteredTokens: OperatorToken[] = tokens.map((t) => (t.kind as any).value);
+
+		for (let i = 0; i < tokens.length; i++) {
+			assert.strictEqual(filteredTokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
+		}
+	});
+
+	await t.test("should tokenize Logical Operators", () => {
+		const data = {
+			"&&": "LogicalAnd",
+			"||": "LogicalOr",
+		};
+		const input = Object.keys(data).join(" ");
+		const expectedTokens = Object.values(data).map((type) => ({ type }));
+		const tokens = sf.dev_lexer(input);
+
+		if (tokens.length !== expectedTokens.length) {
+			assert.deepStrictEqual(tokens, expectedTokens, `Token length mismatch: expected ${expectedTokens.length}, got ${tokens.length}`);
+		}
+
+		for (let i = 0; i < tokens.length; i++) {
+			assert.strictEqual(tokens[i].kind.type, "Operator");
+		}
+
+		const filteredTokens: OperatorToken[] = tokens.map((t) => (t.kind as any).value);
+
+		for (let i = 0; i < tokens.length; i++) {
+			assert.strictEqual(filteredTokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
+		}
+	});
+
+	await t.test("should tokenize Bitwise Operators", () => {
+		const data = {
+			"&": "BitwiseAnd",
+			"|": "BitwiseOr",
+			"^": "BitwiseXor",
+			"~": "BitwiseNot",
+			"<<": "BitwiseLeftShift",
+			"<<<": "BitwiseUnsignedLeftShift",
+			">>": "BitwiseRightShift",
+			">>>": "BitwiseUnsignedRightShift",
+		};
+		const input = Object.keys(data).join(" ");
+		const expectedTokens = Object.values(data).map((type) => ({ type }));
+		const tokens = sf.dev_lexer(input);
+
+		if (tokens.length !== expectedTokens.length) {
+			assert.deepStrictEqual(tokens, expectedTokens, `Token length mismatch: expected ${expectedTokens.length}, got ${tokens.length}`);
+		}
+
+		for (let i = 0; i < tokens.length; i++) {
+			assert.strictEqual(tokens[i].kind.type, "Operator");
+		}
+
+		const filteredTokens: OperatorToken[] = tokens.map((t) => (t.kind as any).value);
+
+		for (let i = 0; i < tokens.length; i++) {
+			assert.strictEqual(filteredTokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
 		}
 	});
 
@@ -62,7 +122,13 @@ test("Lexer Test", async (t) => {
 		}
 
 		for (let i = 0; i < tokens.length; i++) {
-			assert.strictEqual(tokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
+			assert.strictEqual(tokens[i].kind.type, "Delimiter");
+		}
+
+		const filteredTokens: DelimiterToken[] = tokens.map((t) => (t.kind as any).value);
+
+		for (let i = 0; i < tokens.length; i++) {
+			assert.strictEqual(filteredTokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
 		}
 	});
 
@@ -101,49 +167,13 @@ test("Lexer Test", async (t) => {
 		}
 
 		for (let i = 0; i < tokens.length; i++) {
-			assert.strictEqual(tokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
+			assert.strictEqual(tokens[i].kind.type, "Keyword");
 		}
-	});
 
-	await t.test("should tokenize Logical Operators", () => {
-		const data = {
-			"&&": "LogicalAnd",
-			"||": "LogicalOr",
-		};
-		const input = Object.keys(data).join(" ");
-		const expectedTokens = Object.values(data).map((type) => ({ type }));
-		const tokens = sf.dev_lexer(input);
-
-		if (tokens.length !== expectedTokens.length) {
-			assert.deepStrictEqual(tokens, expectedTokens, `Token length mismatch: expected ${expectedTokens.length}, got ${tokens.length}`);
-		}
+		const filteredTokens: KeywordToken[] = tokens.map((t) => (t.kind as any).value);
 
 		for (let i = 0; i < tokens.length; i++) {
-			assert.strictEqual(tokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
-		}
-	});
-
-	await t.test("should tokenize Bitwise Operators", () => {
-		const data = {
-			"&": "BitwiseAnd",
-			"|": "BitwiseOr",
-			"^": "BitwiseXor",
-			"~": "BitwiseNot",
-			"<<": "BitwiseLeftShift",
-			"<<<": "BitwiseUnsignedLeftShift",
-			">>": "BitwiseRightShift",
-			">>>": "BitwiseUnsignedRightShift",
-		};
-		const input = Object.keys(data).join(" ");
-		const expectedTokens = Object.values(data).map((type) => ({ type }));
-		const tokens = sf.dev_lexer(input);
-
-		if (tokens.length !== expectedTokens.length) {
-			assert.deepStrictEqual(tokens, expectedTokens, `Token length mismatch: expected ${expectedTokens.length}, got ${tokens.length}`);
-		}
-
-		for (let i = 0; i < tokens.length; i++) {
-			assert.strictEqual(tokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
+			assert.strictEqual(filteredTokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
 		}
 	});
 
@@ -188,7 +218,13 @@ test("Lexer Test", async (t) => {
 		}
 
 		for (let i = 0; i < tokens.length; i++) {
-			assert.strictEqual(tokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch: ${JSON.stringify(tokens[i])}`);
+			assert.strictEqual(tokens[i].kind.type, "Literal");
+		}
+
+		const filteredTokens: LiteralToken[] = tokens.map((t) => (t.kind as any).value);
+
+		for (let i = 0; i < tokens.length; i++) {
+			assert.strictEqual(filteredTokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch: ${JSON.stringify(tokens[i])}`);
 		}
 	});
 
@@ -216,7 +252,7 @@ test("Lexer Test", async (t) => {
 				continue;
 			}
 
-			assert.notStrictEqual(tokens[0].type, expectedTokens[i].type, `Token [${input[i]}] type match: ${JSON.stringify(tokens)}`);
+			assert.notStrictEqual(tokens[0].kind.type, expectedTokens[i].type, `Token [${input[i]}] type match: ${JSON.stringify(tokens)}`);
 		}
 	});
 
@@ -242,7 +278,13 @@ test("Lexer Test", async (t) => {
 		}
 
 		for (let i = 0; i < tokens.length; i++) {
-			assert.strictEqual(tokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch: ${JSON.stringify(tokens[i])}`);
+			assert.strictEqual(tokens[i].kind.type, "Literal");
+		}
+
+		const filteredTokens: LiteralToken[] = tokens.map((t) => (t.kind as any).value);
+
+		for (let i = 0; i < tokens.length; i++) {
+			assert.strictEqual(filteredTokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch: ${JSON.stringify(tokens[i])}`);
 		}
 	});
 
@@ -278,7 +320,13 @@ test("Lexer Test", async (t) => {
 		}
 
 		for (let i = 0; i < tokens.length; i++) {
-			assert.strictEqual(tokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
+			assert.strictEqual(tokens[i].kind.type, "Identifier");
+		}
+
+		const filteredTokens = tokens.map((t) => t.kind);
+
+		for (let i = 0; i < tokens.length; i++) {
+			assert.strictEqual(filteredTokens[i].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
 		}
 	});
 
@@ -293,7 +341,7 @@ test("Lexer Test", async (t) => {
 		for (let i = 0; i < input.length; i++) {
 			const tokens = sf.dev_lexer(input[i]);
 
-			assert.notStrictEqual(tokens[0].type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
+			assert.notStrictEqual(tokens[0].kind.type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
 		}
 	});
 });

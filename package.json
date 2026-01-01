@@ -1,6 +1,6 @@
 {
   "name": "snowfall2",
-  "version": "0.0.1",
+  "version": "v0.0.2",
   "description": "",
   "license": "Apache-2.0",
   "author": "hi2ma-bu4",
@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
+    "dts-bundle-generator": "^9.5.1",
     "esbuild": "^0.27.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"

@@ -1,4 +1,6 @@
 import init, * as wasm from "../pkg/snowfall_core";
+import type { Token } from "./const/types";
+import { VERSION } from "./version";
 
 // `wasm`名前空間に`memory`が存在することをTypeScriptに伝えるための型拡張
 export type WasmModule = typeof wasm & { memory: WebAssembly.Memory };
@@ -34,6 +36,24 @@ export class SnowFall {
 	}
 
 	/* ================================================== */
+	/* 管理情報 */
+	/* ================================================== */
+
+	/**
+	 * ts(js)ライブラリのバージョン取得
+	 */
+	public version(): string {
+		return VERSION;
+	}
+	/**
+	 * rust(wasm)ライブラリのバージョン取得
+	 */
+	public version_wasm(): string {
+		const wasm = this.ensureInitialized();
+		return wasm.version();
+	}
+
+	/* ================================================== */
 	/* デバッグ用機能 */
 	/* ================================================== */
 
@@ -43,7 +63,7 @@ export class SnowFall {
 	 * @returns トークンの配列
 	 * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください。
 	 */
-	public dev_lexer(input: string): Array<{ type: string; value?: string }> {
+	public dev_lexer(input: string): Array<Token> {
 		const wasm = this.ensureInitialized();
 		return wasm.lexer(input);
 	}

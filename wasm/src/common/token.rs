@@ -1,20 +1,36 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+use crate::common::Span;
+
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "value")]
-pub enum Token {
+pub enum TokenKind {
     // 特殊トークン (Special Tokens)
     Eof,
     Illegal(String),
-
-    // 識別子とリテラル (Identifiers & Literals)
+    /// 識別子 (Identifiers)
     Identifier(String),
+    Literal(LiteralToken),
+    Operator(OperatorToken),
+    Delimiter(DelimiterToken),
+    Keyword(KeywordToken),
+}
+
+/// リテラル (Literals)
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "value")]
+pub enum LiteralToken {
     Int(i64),
     Float(f64),
     String(String),
-
-    // 演算子 (Operators)
+    Boolean(bool),
+}
+/// 演算子 (Operators)
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum OperatorToken {
+    // 基本的な演算子 (Basic Operators)
     Assign,             // =
     Equal,              // ==
     StrictEqual,        // ===
@@ -32,7 +48,25 @@ pub enum Token {
     GreaterThan,        // >
     GreaterThanOrEqual, // >=
 
-    // 境界記号 (Delimiters)
+    // 論理演算子 (Logical Operators)
+    LogicalAnd, // &&
+    LogicalOr,  // ||
+
+    // ビット演算子 (Bitwise Operators)
+    BitwiseAnd,                // &
+    BitwiseOr,                 // |
+    BitwiseXor,                // ^
+    BitwiseNot,                // ~
+    BitwiseLeftShift,          // <<
+    BitwiseUnsignedLeftShift,  // <<<
+    BitwiseRightShift,         // >>
+    BitwiseUnsignedRightShift, // >>>
+}
+
+/// 境界記号 (Delimiters)
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum DelimiterToken {
     Dot,       // .
     Comma,     // ,
     Colon,     // :
@@ -43,8 +77,12 @@ pub enum Token {
     RBrace,    // }
     LBracket,  // [
     RBracket,  // ]
+}
 
-    // キーワード (Keywords)
+/// キーワード (Keywords)
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum KeywordToken {
     Function,    // function
     Sub,         // sub
     Class,       // class
@@ -68,20 +106,12 @@ pub enum Token {
     Null,        // null
     And,         // and
     Or,          // or
+}
 
-    // 論理演算子 (Logical Operators)
-    LogicalAnd, // &&
-    LogicalOr,  // ||
-
-    // ビット演算子 (Bitwise Operators)
-    BitwiseAnd,                // &
-    BitwiseOr,                 // |
-    BitwiseXor,                // ^
-    BitwiseNot,                // ~
-    BitwiseLeftShift,          // <<
-    BitwiseUnsignedLeftShift,  // <<<
-    BitwiseRightShift,         // >>
-    BitwiseUnsignedRightShift, // >>>
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Token {
+    pub kind: TokenKind,
+    pub span: Span,
 }
 
 impl fmt::Display for Token {

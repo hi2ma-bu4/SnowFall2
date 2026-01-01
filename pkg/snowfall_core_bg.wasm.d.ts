@@ -4,6 +4,7 @@ export const memory: WebAssembly.Memory;
 export const main_init: () => void;
 export const allocate_memory: (a: number) => number;
 export const free_memory: (a: number, b: number) => void;
+export const version: () => [number, number];
 export const lexer: (a: number, b: number) => [number, number, number];
 export const __wbindgen_malloc: (a: number, b: number) => number;
 export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
