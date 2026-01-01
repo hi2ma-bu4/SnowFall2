@@ -1,3 +1,9 @@
+/*!
+ * SnowFall2 v0.0.3
+ * Copyright 2026 hi2ma-bu4
+ * Licensed under the Apache License, Version 2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
+ */
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -276,28 +282,75 @@ async function __wbg_init(module_or_path) {
 }
 var snowfall_core_default = __wbg_init;
 
+// src/libs/Logger.ts
+var Logger = class {
+  static isDebug = false;
+  static prefix = "SnowFall";
+  static info(...args) {
+    if (this.isDebug) console.log(`[${this.prefix}]`, ...args);
+  }
+  static warn(...args) {
+    console.warn(`[${this.prefix}]`, ...args);
+  }
+  static error(...args) {
+    console.error(`[${this.prefix}]`, ...args);
+  }
+};
+
+// src/libs/version_check.ts
+function parseSemVer(v) {
+  const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(v);
+  if (!m) return null;
+  return {
+    major: Number(m[1]),
+    minor: Number(m[2]),
+    patch: Number(m[3])
+  };
+}
+function compareVersion(tsV, rustV) {
+  if (tsV.major !== rustV.major) {
+    return {
+      kind: "err",
+      message: `MAJOR mismatch: ts=${tsV.major}, rust=${rustV.major}`
+    };
+  }
+  if (tsV.minor !== rustV.minor) {
+    return {
+      kind: "err",
+      message: `MINOR mismatch: ts=${tsV.minor}, rust=${rustV.minor}`
+    };
+  }
+  if (tsV.patch !== rustV.patch) {
+    return {
+      kind: "warn",
+      message: `PATCH mismatch: ts=${tsV.patch}, rust=${rustV.patch}`
+    };
+  }
+  return { kind: "ok" };
+}
+
 // src/version.ts
-var VERSION = "v0.0.2";
+var VERSION = "v0.0.3";
 
 // src/snowfall.ts
 var SnowFall = class {
-  _isDebug = false;
   _wasm = null;
   _isInitialized = false;
   constructor(isDebug = false) {
-    this._isDebug = isDebug;
+    Logger.isDebug = isDebug;
   }
   async init(wasmPath) {
     if (this._isInitialized) return;
     try {
       await snowfall_core_default(wasmPath);
-      this._wasm = snowfall_core_exports;
-      this._isInitialized = true;
-      this._logInfo("SnowFall Wasm module initialized successfully.");
     } catch (error) {
-      console.error("Failed to initialize SnowFall Wasm module:", error);
+      Logger.error("Failed to initialize SnowFall Wasm module:", error);
       throw error;
     }
+    this._wasm = snowfall_core_exports;
+    this._versionCheck();
+    this._isInitialized = true;
+    Logger.info("SnowFall Wasm module initialized successfully.");
   }
   ensureInitialized() {
     if (!this._wasm || !this._isInitialized) {
@@ -337,8 +390,27 @@ var SnowFall = class {
   /* ================================================== */
   /* 共通利用 */
   /* ================================================== */
-  _logInfo(message) {
-    if (this._isDebug) console.log(`[SnowFall] ${message}`);
+  /**
+   * バージョンチェック
+   * @throws {Error}
+   */
+  _versionCheck() {
+    if (!this._wasm) return;
+    const tsVer = parseSemVer(this.version());
+    const rustVer = parseSemVer(this._wasm.version());
+    if (!tsVer || !rustVer) {
+      throw new Error("Invalid version format (expected x.y.z)");
+    }
+    const result = compareVersion(tsVer, rustVer);
+    switch (result.kind) {
+      case "ok":
+        return;
+      case "warn":
+        Logger.warn("[Version]", result.message);
+        return;
+      case "err":
+        throw new Error(`[Version] ${result.message}`);
+    }
   }
 };
 export {

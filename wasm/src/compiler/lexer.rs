@@ -1,5 +1,6 @@
-use crate::common::{
-    DelimiterToken, KeywordToken, LiteralToken, OperatorToken, Span, Token, TokenKind,
+use crate::{
+    common::{DelimiterToken, KeywordToken, LiteralToken, OperatorToken, Token, TokenKind},
+    create_token,
 };
 
 pub struct Lexer<'a> {
@@ -78,524 +79,301 @@ impl<'a> Lexer<'a> {
                     if self.peek_char() == b'=' {
                         self.read_char();
                         // (===)
-                        Token {
-                            kind: TokenKind::Operator(OperatorToken::StrictEqual),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        }
+                        create_token!(
+                            TokenKind::Operator(OperatorToken::StrictEqual),
+                            start_pos,
+                            self.position + 1
+                        )
                     } else {
                         // (==)
-                        Token {
-                            kind: TokenKind::Operator(OperatorToken::Equal),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        }
+                        create_token!(
+                            TokenKind::Operator(OperatorToken::Equal),
+                            start_pos,
+                            self.position + 1
+                        )
                     }
                 } else {
                     // (=)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::Assign),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::Assign),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             }
-            b'+' => Token {
-                kind: TokenKind::Operator(OperatorToken::Plus),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b'-' => Token {
-                kind: TokenKind::Operator(OperatorToken::Minus),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
+            b'+' => create_token!(
+                TokenKind::Operator(OperatorToken::Plus),
+                start_pos,
+                self.position + 1
+            ),
+            b'-' => create_token!(
+                TokenKind::Operator(OperatorToken::Minus),
+                start_pos,
+                self.position + 1
+            ),
             b'*' => {
                 if self.peek_char() == b'*' {
                     self.read_char();
                     // (**)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::Power),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::Power),
+                        start_pos,
+                        self.position + 1
+                    )
                 } else {
                     // (*)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::Asterisk),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::Asterisk),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             }
-            b'/' => Token {
-                kind: TokenKind::Operator(OperatorToken::Slash),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b'%' => Token {
-                kind: TokenKind::Operator(OperatorToken::Percent),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
+            b'/' => create_token!(
+                TokenKind::Operator(OperatorToken::Slash),
+                start_pos,
+                self.position + 1
+            ),
+            b'%' => create_token!(
+                TokenKind::Operator(OperatorToken::Percent),
+                start_pos,
+                self.position + 1
+            ),
             b'!' => {
                 if self.peek_char() == b'=' {
                     self.read_char();
                     if self.peek_char() == b'=' {
                         self.read_char();
                         // (!==)
-                        Token {
-                            kind: TokenKind::Operator(OperatorToken::StrictNotEqual),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        }
+                        create_token!(
+                            TokenKind::Operator(OperatorToken::StrictNotEqual),
+                            start_pos,
+                            self.position + 1
+                        )
                     } else {
                         // (!=)
-                        Token {
-                            kind: TokenKind::Operator(OperatorToken::NotEqual),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        }
+                        create_token!(
+                            TokenKind::Operator(OperatorToken::NotEqual),
+                            start_pos,
+                            self.position + 1
+                        )
                     }
                 } else {
                     // (!)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::Bang),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::Bang),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             }
             b'<' => {
                 if self.peek_char() == b'=' {
                     self.read_char();
                     // (<=)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::LessThanOrEqual),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::LessThanOrEqual),
+                        start_pos,
+                        self.position + 1
+                    )
                 } else if self.peek_char() == b'<' {
                     self.read_char();
                     if self.peek_char() == b'<' {
                         self.read_char();
                         // (<<<)
-                        Token {
-                            kind: TokenKind::Operator(OperatorToken::BitwiseUnsignedLeftShift),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        }
+                        create_token!(
+                            TokenKind::Operator(OperatorToken::BitwiseUnsignedLeftShift),
+                            start_pos,
+                            self.position + 1
+                        )
                     } else {
                         // (<<)
-                        Token {
-                            kind: TokenKind::Operator(OperatorToken::BitwiseLeftShift),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        }
+                        create_token!(
+                            TokenKind::Operator(OperatorToken::BitwiseLeftShift),
+                            start_pos,
+                            self.position + 1
+                        )
                     }
                 } else {
                     // (<)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::LessThan),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::LessThan),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             }
             b'>' => {
                 if self.peek_char() == b'=' {
                     self.read_char();
                     // (>=)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::GreaterThanOrEqual),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::GreaterThanOrEqual),
+                        start_pos,
+                        self.position + 1
+                    )
                 } else if self.peek_char() == b'>' {
                     self.read_char();
                     if self.peek_char() == b'>' {
                         self.read_char();
                         // (>>>)
-                        Token {
-                            kind: TokenKind::Operator(OperatorToken::BitwiseUnsignedRightShift),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        }
+                        create_token!(
+                            TokenKind::Operator(OperatorToken::BitwiseUnsignedRightShift),
+                            start_pos,
+                            self.position + 1
+                        )
                     } else {
                         // (>>)
-                        Token {
-                            kind: TokenKind::Operator(OperatorToken::BitwiseRightShift),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        }
+                        create_token!(
+                            TokenKind::Operator(OperatorToken::BitwiseRightShift),
+                            start_pos,
+                            self.position + 1
+                        )
                     }
                 } else {
                     // (>)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::GreaterThan),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::GreaterThan),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             }
-            b'.' => Token {
-                kind: TokenKind::Delimiter(DelimiterToken::Dot),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b',' => Token {
-                kind: TokenKind::Delimiter(DelimiterToken::Comma),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b':' => Token {
-                kind: TokenKind::Delimiter(DelimiterToken::Colon),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b';' => Token {
-                kind: TokenKind::Delimiter(DelimiterToken::Semicolon),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b'(' => Token {
-                kind: TokenKind::Delimiter(DelimiterToken::LParen),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b')' => Token {
-                kind: TokenKind::Delimiter(DelimiterToken::RParen),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b'{' => Token {
-                kind: TokenKind::Delimiter(DelimiterToken::LBrace),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b'}' => Token {
-                kind: TokenKind::Delimiter(DelimiterToken::RBrace),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b'[' => Token {
-                kind: TokenKind::Delimiter(DelimiterToken::LBracket),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b']' => Token {
-                kind: TokenKind::Delimiter(DelimiterToken::RBracket),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
+            b'.' => create_token!(
+                TokenKind::Delimiter(DelimiterToken::Dot),
+                start_pos,
+                self.position + 1
+            ),
+            b',' => create_token!(
+                TokenKind::Delimiter(DelimiterToken::Comma),
+                start_pos,
+                self.position + 1
+            ),
+            b':' => create_token!(
+                TokenKind::Delimiter(DelimiterToken::Colon),
+                start_pos,
+                self.position + 1
+            ),
+            b';' => create_token!(
+                TokenKind::Delimiter(DelimiterToken::Semicolon),
+                start_pos,
+                self.position + 1
+            ),
+            b'(' => create_token!(
+                TokenKind::Delimiter(DelimiterToken::LParen),
+                start_pos,
+                self.position + 1
+            ),
+            b')' => create_token!(
+                TokenKind::Delimiter(DelimiterToken::RParen),
+                start_pos,
+                self.position + 1
+            ),
+            b'{' => create_token!(
+                TokenKind::Delimiter(DelimiterToken::LBrace),
+                start_pos,
+                self.position + 1
+            ),
+            b'}' => create_token!(
+                TokenKind::Delimiter(DelimiterToken::RBrace),
+                start_pos,
+                self.position + 1
+            ),
+            b'[' => create_token!(
+                TokenKind::Delimiter(DelimiterToken::LBracket),
+                start_pos,
+                self.position + 1
+            ),
+            b']' => create_token!(
+                TokenKind::Delimiter(DelimiterToken::RBracket),
+                start_pos,
+                self.position + 1
+            ),
             b'&' => {
                 if self.peek_char() == b'&' {
                     self.read_char();
                     // (&&)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::LogicalAnd),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::LogicalAnd),
+                        start_pos,
+                        self.position + 1
+                    )
                 } else {
                     // (&)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::BitwiseAnd),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::BitwiseAnd),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             }
             b'|' => {
                 if self.peek_char() == b'|' {
                     self.read_char();
                     // (||)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::LogicalOr),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::LogicalOr),
+                        start_pos,
+                        self.position + 1
+                    )
                 } else {
                     // (|)
-                    Token {
-                        kind: TokenKind::Operator(OperatorToken::BitwiseOr),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    create_token!(
+                        TokenKind::Operator(OperatorToken::BitwiseOr),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             }
-            b'^' => Token {
-                kind: TokenKind::Operator(OperatorToken::BitwiseXor),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            b'~' => Token {
-                kind: TokenKind::Operator(OperatorToken::BitwiseNot),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
+            b'^' => create_token!(
+                TokenKind::Operator(OperatorToken::BitwiseXor),
+                start_pos,
+                self.position + 1
+            ),
+            b'~' => create_token!(
+                TokenKind::Operator(OperatorToken::BitwiseNot),
+                start_pos,
+                self.position + 1
+            ),
             b'"' => self.read_string(),
             b'\'' => self.read_string(),
             b'0'..=b'9' => return self.read_number(),
             b'a'..=b'z' | b'A'..=b'Z' | b'_' => {
                 let ident = self.read_identifier();
-                return match ident.as_str() {
-                    "function" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Function),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "sub" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Sub),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "class" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Class),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "extends" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Extends),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "constructor" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Constructor),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "new" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::New),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "if" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::If),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "else" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Else),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "for" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::For),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "while" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::While),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "in" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::In),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "of" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Of),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "switch" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Switch),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "case" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Case),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "default" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Default),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "break" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Break),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "continue" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Continue),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "return" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Return),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "true" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::True),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "false" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::False),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "null" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Null),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "and" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::And),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    "or" => Token {
-                        kind: TokenKind::Keyword(KeywordToken::Or),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
-                    _ => Token {
-                        kind: TokenKind::Identifier(ident),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    },
+                let kind = match ident.as_str() {
+                    "function" => TokenKind::Keyword(KeywordToken::Function),
+                    "sub" => TokenKind::Keyword(KeywordToken::Sub),
+                    "class" => TokenKind::Keyword(KeywordToken::Class),
+                    "extends" => TokenKind::Keyword(KeywordToken::Extends),
+                    "constructor" => TokenKind::Keyword(KeywordToken::Constructor),
+                    "new" => TokenKind::Keyword(KeywordToken::New),
+                    "if" => TokenKind::Keyword(KeywordToken::If),
+                    "else" => TokenKind::Keyword(KeywordToken::Else),
+                    "for" => TokenKind::Keyword(KeywordToken::For),
+                    "while" => TokenKind::Keyword(KeywordToken::While),
+                    "in" => TokenKind::Keyword(KeywordToken::In),
+                    "of" => TokenKind::Keyword(KeywordToken::Of),
+                    "switch" => TokenKind::Keyword(KeywordToken::Switch),
+                    "case" => TokenKind::Keyword(KeywordToken::Case),
+                    "default" => TokenKind::Keyword(KeywordToken::Default),
+                    "break" => TokenKind::Keyword(KeywordToken::Break),
+                    "continue" => TokenKind::Keyword(KeywordToken::Continue),
+                    "return" => TokenKind::Keyword(KeywordToken::Return),
+                    "true" => TokenKind::Keyword(KeywordToken::True),
+                    "false" => TokenKind::Keyword(KeywordToken::False),
+                    "null" => TokenKind::Keyword(KeywordToken::Null),
+                    "and" => TokenKind::Keyword(KeywordToken::And),
+                    "or" => TokenKind::Keyword(KeywordToken::Or),
+                    _ => TokenKind::Identifier(ident),
                 };
+                return create_token!(kind, start_pos, self.position + 1);
             }
-            0 => Token {
-                kind: TokenKind::Eof,
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            _ => Token {
-                kind: TokenKind::Illegal(self.ch.to_string()),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
+            0 => create_token!(TokenKind::Eof, start_pos, self.position),
+            _ => create_token!(
+                TokenKind::Illegal(self.ch.to_string()),
+                start_pos,
+                self.position + 1
+            ),
         };
 
         self.read_char();
@@ -664,26 +442,22 @@ impl<'a> Lexer<'a> {
                 b'_' => {
                     // 先頭 or '.' 直後は NG
                     if number_str.is_empty() || !prev_was_digit {
-                        return Token {
-                            kind: TokenKind::Illegal(number_str),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        };
+                        return create_token!(
+                            TokenKind::Illegal(number_str),
+                            start_pos,
+                            self.position + 1
+                        );
                     }
                     prev_was_underscore = true;
                 }
                 b'.' => {
                     // '_' 直後は NG
                     if prev_was_underscore {
-                        return Token {
-                            kind: TokenKind::Illegal(number_str),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        };
+                        return create_token!(
+                            TokenKind::Illegal(number_str),
+                            start_pos,
+                            self.position + 1
+                        );
                     }
                     dot_count += 1;
                     if dot_count > 1 {
@@ -705,36 +479,22 @@ impl<'a> Lexer<'a> {
 
         // 末尾 '_' は NG
         if prev_was_underscore {
-            return Token {
-                kind: TokenKind::Illegal(number_str),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            };
+            return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
         }
 
         if dot_count >= 1 {
             let (int_str, frac_str) = match number_str.split_once('.') {
                 Some(v) => v,
                 None => {
-                    return Token {
-                        kind: TokenKind::Illegal(number_str),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    return create_token!(
+                        TokenKind::Illegal(number_str),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             };
             if int_str.is_empty() && frac_str.is_empty() {
-                return Token {
-                    kind: TokenKind::Illegal(number_str),
-                    span: Span {
-                        start: start_pos,
-                        end: self.position + 1,
-                    },
-                };
+                return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
             }
 
             if int_str.is_empty() {
@@ -744,37 +504,25 @@ impl<'a> Lexer<'a> {
             }
 
             match number_str.parse::<f64>() {
-                Ok(f) => Token {
-                    kind: TokenKind::Literal(LiteralToken::Float(f)),
-                    span: Span {
-                        start: start_pos,
-                        end: self.position + 1,
-                    },
-                },
-                Err(_) => Token {
-                    kind: TokenKind::Illegal(number_str),
-                    span: Span {
-                        start: start_pos,
-                        end: self.position + 1,
-                    },
-                },
+                Ok(f) => create_token!(
+                    TokenKind::Literal(LiteralToken::Float(f)),
+                    start_pos,
+                    self.position + 1
+                ),
+                Err(_) => {
+                    create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1)
+                }
             }
         } else {
             match number_str.parse::<i64>() {
-                Ok(i) => Token {
-                    kind: TokenKind::Literal(LiteralToken::Int(i)),
-                    span: Span {
-                        start: start_pos,
-                        end: self.position + 1,
-                    },
-                },
-                Err(_) => Token {
-                    kind: TokenKind::Illegal(number_str),
-                    span: Span {
-                        start: start_pos,
-                        end: self.position + 1,
-                    },
-                },
+                Ok(i) => create_token!(
+                    TokenKind::Literal(LiteralToken::Int(i)),
+                    start_pos,
+                    self.position + 1
+                ),
+                Err(_) => {
+                    create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1)
+                }
             }
         }
     }
@@ -797,26 +545,22 @@ impl<'a> Lexer<'a> {
                 b'_' => {
                     // 先頭 or '.' 直後は NG
                     if number_str.is_empty() || !prev_was_digit {
-                        return Token {
-                            kind: TokenKind::Illegal(number_str),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        };
+                        return create_token!(
+                            TokenKind::Illegal(number_str),
+                            start_pos,
+                            self.position + 1
+                        );
                     }
                     prev_was_underscore = true;
                 }
                 b'.' => {
                     // '_' 直後は NG
                     if prev_was_underscore {
-                        return Token {
-                            kind: TokenKind::Illegal(number_str),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        };
+                        return create_token!(
+                            TokenKind::Illegal(number_str),
+                            start_pos,
+                            self.position + 1
+                        );
                     }
                     dot_count += 1;
                     if dot_count > 1 {
@@ -838,13 +582,7 @@ impl<'a> Lexer<'a> {
 
         // 末尾 '_' は NG
         if prev_was_underscore {
-            return Token {
-                kind: TokenKind::Illegal(number_str),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            };
+            return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
         }
 
         // 0xf.f のような16進浮動小数点数を処理します
@@ -853,36 +591,26 @@ impl<'a> Lexer<'a> {
             let (int_str, frac_str) = match number_str.split_once('.') {
                 Some(v) => v,
                 None => {
-                    return Token {
-                        kind: TokenKind::Illegal(number_str),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    return create_token!(
+                        TokenKind::Illegal(number_str),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             };
 
             if int_str.is_empty() {
-                return Token {
-                    kind: TokenKind::Illegal(number_str),
-                    span: Span {
-                        start: start_pos,
-                        end: self.position + 1,
-                    },
-                };
+                return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
             }
 
             let integer_part = match i64::from_str_radix(int_str, 16) {
                 Ok(v) => v as f64,
                 Err(_) => {
-                    return Token {
-                        kind: TokenKind::Illegal(number_str),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    return create_token!(
+                        TokenKind::Illegal(number_str),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             };
 
@@ -893,43 +621,31 @@ impl<'a> Lexer<'a> {
                 let digit = match c.to_digit(16) {
                     Some(d) => d as f64,
                     None => {
-                        return Token {
-                            kind: TokenKind::Illegal(number_str),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        }
+                        return create_token!(
+                            TokenKind::Illegal(number_str),
+                            start_pos,
+                            self.position + 1
+                        )
                     }
                 };
                 fractional_part += digit / base;
                 base *= 16.0;
             }
 
-            return Token {
-                kind: TokenKind::Literal(LiteralToken::Float(integer_part + fractional_part)),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            };
+            return create_token!(
+                TokenKind::Literal(LiteralToken::Float(integer_part + fractional_part)),
+                start_pos,
+                self.position + 1
+            );
         }
 
         match i64::from_str_radix(&number_str, 16) {
-            Ok(i) => Token {
-                kind: TokenKind::Literal(LiteralToken::Int(i)),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            Err(_) => Token {
-                kind: TokenKind::Illegal(number_str),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
+            Ok(i) => create_token!(
+                TokenKind::Literal(LiteralToken::Int(i)),
+                start_pos,
+                self.position + 1
+            ),
+            Err(_) => create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1),
         }
     }
 
@@ -951,26 +667,22 @@ impl<'a> Lexer<'a> {
                 b'_' => {
                     // 先頭 or '.' 直後は NG
                     if number_str.is_empty() || !prev_was_digit {
-                        return Token {
-                            kind: TokenKind::Illegal(number_str),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        };
+                        return create_token!(
+                            TokenKind::Illegal(number_str),
+                            start_pos,
+                            self.position + 1
+                        );
                     }
                     prev_was_underscore = true;
                 }
                 b'.' => {
                     // '_' 直後は NG
                     if prev_was_underscore {
-                        return Token {
-                            kind: TokenKind::Illegal(number_str),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        };
+                        return create_token!(
+                            TokenKind::Illegal(number_str),
+                            start_pos,
+                            self.position + 1
+                        );
                     }
                     dot_count += 1;
                     if dot_count > 1 {
@@ -992,13 +704,7 @@ impl<'a> Lexer<'a> {
 
         // 末尾 '_' は NG
         if prev_was_underscore {
-            return Token {
-                kind: TokenKind::Illegal(number_str),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            };
+            return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
         }
 
         // 0b1.1 のような2進浮動小数点数を処理します
@@ -1007,36 +713,26 @@ impl<'a> Lexer<'a> {
             let (int_str, frac_str) = match number_str.split_once('.') {
                 Some(v) => v,
                 None => {
-                    return Token {
-                        kind: TokenKind::Illegal(number_str),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    return create_token!(
+                        TokenKind::Illegal(number_str),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             };
 
             if int_str.is_empty() {
-                return Token {
-                    kind: TokenKind::Illegal(number_str),
-                    span: Span {
-                        start: start_pos,
-                        end: self.position + 1,
-                    },
-                };
+                return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
             }
 
             let integer_part = match i64::from_str_radix(int_str, 2) {
                 Ok(v) => v as f64,
                 Err(_) => {
-                    return Token {
-                        kind: TokenKind::Illegal(number_str),
-                        span: Span {
-                            start: start_pos,
-                            end: self.position + 1,
-                        },
-                    }
+                    return create_token!(
+                        TokenKind::Illegal(number_str),
+                        start_pos,
+                        self.position + 1
+                    )
                 }
             };
 
@@ -1048,43 +744,31 @@ impl<'a> Lexer<'a> {
                     '0' => 0.0,
                     '1' => 1.0,
                     _ => {
-                        return Token {
-                            kind: TokenKind::Illegal(number_str),
-                            span: Span {
-                                start: start_pos,
-                                end: self.position + 1,
-                            },
-                        }
+                        return create_token!(
+                            TokenKind::Illegal(number_str),
+                            start_pos,
+                            self.position + 1
+                        )
                     }
                 };
                 fractional_part += digit / base;
                 base *= 2.0;
             }
 
-            return Token {
-                kind: TokenKind::Literal(LiteralToken::Float(integer_part + fractional_part)),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            };
+            return create_token!(
+                TokenKind::Literal(LiteralToken::Float(integer_part + fractional_part)),
+                start_pos,
+                self.position + 1
+            );
         }
 
         match i64::from_str_radix(&number_str, 2) {
-            Ok(i) => Token {
-                kind: TokenKind::Literal(LiteralToken::Int(i)),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
-            Err(_) => Token {
-                kind: TokenKind::Illegal(number_str),
-                span: Span {
-                    start: start_pos,
-                    end: self.position + 1,
-                },
-            },
+            Ok(i) => create_token!(
+                TokenKind::Literal(LiteralToken::Int(i)),
+                start_pos,
+                self.position + 1
+            ),
+            Err(_) => create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1),
         }
     }
 
@@ -1101,12 +785,10 @@ impl<'a> Lexer<'a> {
         }
         let s = self.input[position..self.position].to_string();
 
-        Token {
-            kind: TokenKind::Literal(LiteralToken::String(s)),
-            span: Span {
-                start: start_pos,
-                end: self.position + 1,
-            },
-        }
+        create_token!(
+            TokenKind::Literal(LiteralToken::String(s)),
+            start_pos,
+            self.position + 1
+        )
     }
 }

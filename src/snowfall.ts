@@ -1,17 +1,18 @@
 import init, * as wasm from "../pkg/snowfall_core";
 import type { Token } from "./const/types";
+import { Logger } from "./libs/Logger";
+import { compareVersion, parseSemVer } from "./libs/version_check";
 import { VERSION } from "./version";
 
 // `wasm`名前空間に`memory`が存在することをTypeScriptに伝えるための型拡張
 export type WasmModule = typeof wasm & { memory: WebAssembly.Memory };
 
 export class SnowFall {
-	private _isDebug: boolean = false;
 	private _wasm: WasmModule | null = null;
 	private _isInitialized: boolean = false;
 
 	constructor(isDebug: boolean = false) {
-		this._isDebug = isDebug;
+		Logger.isDebug = isDebug;
 	}
 
 	public async init(wasmPath: string | ArrayBuffer | NonSharedBuffer): Promise<void> {
@@ -19,13 +20,17 @@ export class SnowFall {
 
 		try {
 			await init(wasmPath);
-			this._wasm = wasm as WasmModule;
-			this._isInitialized = true;
-			this._logInfo("SnowFall Wasm module initialized successfully.");
 		} catch (error) {
-			console.error("Failed to initialize SnowFall Wasm module:", error);
+			Logger.error("Failed to initialize SnowFall Wasm module:", error);
 			throw error;
 		}
+
+		this._wasm = wasm as WasmModule;
+		this._versionCheck();
+
+		this._isInitialized = true;
+
+		Logger.info("SnowFall Wasm module initialized successfully.");
 	}
 
 	public ensureInitialized(): WasmModule {
@@ -72,7 +77,29 @@ export class SnowFall {
 	/* 共通利用 */
 	/* ================================================== */
 
-	private _logInfo(message: string): void {
-		if (this._isDebug) console.log(`[SnowFall] ${message}`);
+	/**
+	 * バージョンチェック
+	 * @throws {Error}
+	 */
+	private _versionCheck(): void {
+		if (!this._wasm) return;
+		const tsVer = parseSemVer(this.version());
+		const rustVer = parseSemVer(this._wasm.version());
+
+		if (!tsVer || !rustVer) {
+			throw new Error("Invalid version format (expected x.y.z)");
+		}
+
+		const result = compareVersion(tsVer, rustVer);
+
+		switch (result.kind) {
+			case "ok":
+				return;
+			case "warn":
+				Logger.warn("[Version]", result.message);
+				return;
+			case "err":
+				throw new Error(`[Version] ${result.message}`);
+		}
 	}
 }

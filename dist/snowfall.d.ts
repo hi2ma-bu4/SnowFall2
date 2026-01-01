@@ -83,7 +83,6 @@ export type WasmModule = typeof wasm & {
 	memory: WebAssembly.Memory;
 };
 export declare class SnowFall {
-	private _isDebug;
 	private _wasm;
 	private _isInitialized;
 	constructor(isDebug?: boolean);
@@ -104,7 +103,11 @@ export declare class SnowFall {
 	 * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください。
 	 */
 	dev_lexer(input: string): Array<Token>;
-	private _logInfo;
+	/**
+	 * バージョンチェック
+	 * @throws {Error}
+	 */
+	private _versionCheck;
 }
 
 declare namespace wasm {
