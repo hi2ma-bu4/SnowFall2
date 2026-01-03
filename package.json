@@ -1,6 +1,6 @@
 {
   "name": "snowfall2",
-  "version": "v0.0.3",
+  "version": "v0.0.4",
   "description": "",
   "license": "Apache-2.0",
   "author": "hi2ma-bu4",
@@ -9,7 +9,8 @@
   "scripts": {
     "build": "node ./dev/build.mjs",
     "test:unit": "node --test --import tsx test/node/*.test.ts",
-    "test": "npm run build && npm run test:unit"
+    "test": "npm run build && npm run test:unit",
+    "twiggy": "twiggy top -n 10 ./pkg/snowfall_core_bg.wasm"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",

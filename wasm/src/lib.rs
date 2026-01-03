@@ -9,7 +9,7 @@ extern crate console_error_panic_hook;
 pub mod common;
 pub mod compiler;
 
-use crate::common::{constants, Token, TokenKind};
+use crate::common::{Token, TokenKind, constants};
 use crate::compiler::Lexer;
 
 /// ライブラリの初期化時に一度だけ呼び出されるべき関数。
@@ -53,10 +53,14 @@ pub fn lexer(source: &str) -> Result<JsValue, JsValue> {
     let mut lexer = Lexer::new(source);
     let mut tokens: Vec<Token> = Vec::new();
 
-    let mut cur_token = lexer.next_token();
-    while cur_token.kind != TokenKind::Eof {
-        tokens.push(cur_token);
-        cur_token = lexer.next_token();
+    loop {
+        let token = lexer.next_token();
+
+        if token.kind == TokenKind::Eof {
+            break;
+        }
+
+        tokens.push(token);
     }
 
     serde_wasm_bindgen::to_value(&tokens)

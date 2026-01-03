@@ -368,7 +368,7 @@ impl<'a> Lexer<'a> {
                 };
                 return create_token!(kind, start_pos, self.position + 1);
             }
-            0 => create_token!(TokenKind::Eof, start_pos, self.position),
+            0 => Token::eof(start_pos),
             _ => create_token!(
                 TokenKind::Illegal(self.ch.to_string()),
                 start_pos,
@@ -490,7 +490,7 @@ impl<'a> Lexer<'a> {
                         TokenKind::Illegal(number_str),
                         start_pos,
                         self.position + 1
-                    )
+                    );
                 }
             };
             if int_str.is_empty() && frac_str.is_empty() {
@@ -595,7 +595,7 @@ impl<'a> Lexer<'a> {
                         TokenKind::Illegal(number_str),
                         start_pos,
                         self.position + 1
-                    )
+                    );
                 }
             };
 
@@ -610,7 +610,7 @@ impl<'a> Lexer<'a> {
                         TokenKind::Illegal(number_str),
                         start_pos,
                         self.position + 1
-                    )
+                    );
                 }
             };
 
@@ -625,7 +625,7 @@ impl<'a> Lexer<'a> {
                             TokenKind::Illegal(number_str),
                             start_pos,
                             self.position + 1
-                        )
+                        );
                     }
                 };
                 fractional_part += digit / base;
@@ -717,7 +717,7 @@ impl<'a> Lexer<'a> {
                         TokenKind::Illegal(number_str),
                         start_pos,
                         self.position + 1
-                    )
+                    );
                 }
             };
 
@@ -732,7 +732,7 @@ impl<'a> Lexer<'a> {
                         TokenKind::Illegal(number_str),
                         start_pos,
                         self.position + 1
-                    )
+                    );
                 }
             };
 
@@ -748,7 +748,7 @@ impl<'a> Lexer<'a> {
                             TokenKind::Illegal(number_str),
                             start_pos,
                             self.position + 1
-                        )
+                        );
                     }
                 };
                 fractional_part += digit / base;

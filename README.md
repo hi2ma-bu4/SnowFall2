@@ -7,8 +7,8 @@
 
 [![GitHub repo size](https://img.shields.io/github/repo-size/hi2ma-bu4/SnowFall2)](https://github.com/hi2ma-bu4/SnowFall2)
 [![GitHub js file size in bytes](https://img.shields.io/github/size/hi2ma-bu4/SnowFall2/dist/snowfall.js?label=snowfall.js)](https://github.com/hi2ma-bu4/SnowFall2/blob/main/dist/snowfall.js)
-[![GitHub minify js file size in bytes](https://img.shields.io/github/size/hi2ma-bu4/SnowFall2/dist/snowfall.min.js?label=snowfall.min.js)](https://github.com/hi2ma-bu4/SnowFal2/blob/main/dist/snowfall.min.js)
-[![GitHub wasm file size in bytes](https://img.shields.io/github/size/hi2ma-bu4/SnowFall2/dist/snowfall_core_bg.wasm?label=snowfall_core_bg.wasm)](https://github.com/hi2ma-bu4/SnowFall2/blob/main/dist)
+[![GitHub minify js file size in bytes](https://img.shields.io/github/size/hi2ma-bu4/SnowFall2/dist/snowfall.min.js?label=snowfall.min.js)](https://github.com/hi2ma-bu4/SnowFall2/blob/main/dist/snowfall.min.js)
+[![GitHub wasm file size in bytes](https://img.shields.io/github/size/hi2ma-bu4/SnowFall2/dist/snowfall_core_bg.wasm?label=snowfall_core_bg.wasm)](https://github.com/hi2ma-bu4/SnowFall2/blob/main/dist/snowfall_core_bg.wasm)
 
 
 JavaScript上で動作するプログラム言語です。
