@@ -96,7 +96,7 @@ pub struct VariableDeclarator {
 pub struct Parameter {
     pub name: String,
     pub type_name: String, // 引数は型必須と仮定 (`Int a`)
-    pub value: Option<Box<Statement>>,
+    pub value: Option<Expression>,
 }
 
 /// 変数のバインディング情報

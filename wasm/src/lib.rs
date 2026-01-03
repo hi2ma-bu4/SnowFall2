@@ -54,13 +54,18 @@ pub fn lexer(source: &str) -> Result<JsValue, JsValue> {
     let mut tokens: Vec<Token> = Vec::new();
 
     loop {
-        let token = lexer.next_token();
+        match lexer.next_token() {
+            Ok(token) => {
+                if token.kind == TokenKind::Eof {
+                    break;
+                }
 
-        if token.kind == TokenKind::Eof {
-            break;
+                tokens.push(token);
+            }
+            Err(e) => {
+                return Err(JsValue::from_str(&format!("Lexer error: {:?}", e)));
+            }
         }
-
-        tokens.push(token);
     }
 
     serde_wasm_bindgen::to_value(&tokens)

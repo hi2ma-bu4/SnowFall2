@@ -1,3 +1,4 @@
+use crate::common::error::SnowFallError;
 use crate::common::{
     DelimiterToken, KeywordToken, LiteralToken, OperatorToken, Span, Token, TokenKind,
 };
@@ -56,17 +57,8 @@ enum InfixOpToken {
     Keyword(KeywordToken),
 }
 
-/// 構文解析時に発生するエラー
-#[derive(Debug)]
-pub enum ParseError {
-    /// 期待していたトークンと異なるトークンが現れた場合
-    UnexpectedToken { expected: String, found: Token },
-    /// 汎用的なエラーメッセージ
-    Message(String),
-}
-
 /// パーサ内部で使用するResult型
-type ParseResult<T> = Result<T, ParseError>;
+type ParseResult<T> = Result<T, SnowFallError>;
 
 /// 字句解析器(Lexer)を入力としてASTを構築する構文解析器
 pub struct Parser<'a> {
@@ -77,7 +69,7 @@ pub struct Parser<'a> {
     /// 先読みトークン
     peek_token: Token,
     /// パース中に蓄積されたエラー
-    errors: Vec<ParseError>,
+    errors: Vec<SnowFallError>,
 }
 
 impl<'a> Parser<'a> {
@@ -96,7 +88,17 @@ impl<'a> Parser<'a> {
     /// トークンを1つ進める
     fn next_token(&mut self) {
         self.cur_token = self.peek_token.clone();
-        self.peek_token = self.lexer.next_token();
+        loop {
+            match self.lexer.next_token() {
+                Ok(token) => {
+                    self.peek_token = token;
+                    break;
+                }
+                Err(e) => {
+                    self.errors.push(e);
+                }
+            }
+        }
     }
 
     // ===== ヘルパーメソッド =====
@@ -118,10 +120,15 @@ impl<'a> Parser<'a> {
             self.next_token();
             Ok(())
         } else {
-            Err(ParseError::UnexpectedToken {
-                expected: format!("{:?}", expected),
-                found: self.peek_token.clone(),
-            })
+            Err(SnowFallError::new_compiler_error(
+                format!(
+                    "Expected next token to be {:?}, got {:?} instead",
+                    expected, self.peek_token.kind
+                ),
+                "SF0010".to_string(),
+                self.lexer.line,
+                self.lexer.column,
+            ))
         }
     }
 
@@ -179,7 +186,7 @@ impl<'a> Parser<'a> {
     // ===== エントリーポイント =====
 
     /// ソース全体を解析し `Program` を生成する
-    pub fn parse_program(&mut self) -> Result<Program, Vec<ParseError>> {
+    pub fn parse_program(&mut self) -> Result<Program, Vec<SnowFallError>> {
         let mut statements = Vec::new();
         let start = self.cur_token.span.start;
 
@@ -275,12 +282,8 @@ impl<'a> Parser<'a> {
 
     /// 現在のトークンが型名で、次が変数名かどうかを判定する
     fn is_variable_declaration(&self) -> bool {
-        if let TokenKind::Identifier(_) = self.cur_token.kind {
-            if let TokenKind::Identifier(_) = self.peek_token.kind {
-                return true;
-            }
-        }
-        false
+        matches!(self.cur_token.kind, TokenKind::Identifier(_))
+            && matches!(self.peek_token.kind, TokenKind::Identifier(_))
     }
 
     /// 変数宣言: `Int a = 1, b = 2;`
@@ -291,7 +294,12 @@ impl<'a> Parser<'a> {
         let type_name = if let TokenKind::Identifier(ref s) = self.cur_token.kind {
             s.clone()
         } else {
-            return Err(ParseError::Message("Expected type name".into()));
+            return Err(SnowFallError::new_compiler_error(
+                "Expected type name".into(),
+                "SF0012".to_string(),
+                self.lexer.line,
+                self.lexer.column,
+            ));
         };
 
         let mut declarators = Vec::new();
@@ -350,7 +358,12 @@ impl<'a> Parser<'a> {
         let return_type = if let TokenKind::Identifier(ref s) = self.cur_token.kind {
             Some(s.clone())
         } else {
-            return Err(ParseError::Message("Expected return type".into()));
+            return Err(SnowFallError::new_compiler_error(
+                "Expected return type".into(),
+                "SF0013".to_string(),
+                self.lexer.line,
+                self.lexer.column,
+            ));
         };
 
         // 関数名
@@ -430,7 +443,12 @@ impl<'a> Parser<'a> {
             let type_name = if let TokenKind::Identifier(ref s) = self.cur_token.kind {
                 s.clone()
             } else {
-                return Err(ParseError::Message("Expected parameter type".into()));
+                return Err(SnowFallError::new_compiler_error(
+                    "Expected parameter type".into(),
+                    "SF0014".to_string(),
+                    self.lexer.line,
+                    self.lexer.column,
+                ));
             };
 
             // パラメータ名
@@ -441,10 +459,17 @@ impl<'a> Parser<'a> {
                 unreachable!()
             };
 
+            let mut value = None;
+            if self.peek_token_is(&TokenKind::Operator(OperatorToken::Assign)) {
+                self.next_token();
+                self.next_token();
+                value = Some(self.parse_expression(Precedence::Lowest)?);
+            }
+
             params.push(Parameter {
                 name,
                 type_name,
-                value: todo!(),
+                value,
             });
 
             if self.peek_token_is(&TokenKind::Delimiter(DelimiterToken::Comma)) {
@@ -554,12 +579,30 @@ impl<'a> Parser<'a> {
 
         self.expect_peek(TokenKind::Delimiter(DelimiterToken::LBrace))?;
         // メンバー解析
-        let mut methods = Vec::new();
+        let mut members = Vec::new();
         while !self.peek_token_is(&TokenKind::Delimiter(DelimiterToken::RBrace))
             && !self.peek_token_is(&TokenKind::Eof)
         {
             self.next_token();
-            // TODO: メンバー解析ロジックを作成
+            match self.cur_token.kind {
+                TokenKind::Keyword(KeywordToken::Function) => {
+                    members.push(self.parse_function_declaration()?);
+                }
+                TokenKind::Keyword(KeywordToken::Sub) => {
+                    members.push(self.parse_sub_declaration()?);
+                }
+                _ => {
+                    return Err(SnowFallError::new_compiler_error(
+                        format!(
+                            "Expected 'function' or 'sub' for class member, got {:?}",
+                            self.cur_token.kind
+                        ),
+                        "SF0011".to_string(),
+                        self.lexer.line,
+                        self.lexer.column,
+                    ));
+                }
+            }
         }
         self.expect_peek(TokenKind::Delimiter(DelimiterToken::RBrace))?;
 
@@ -567,7 +610,7 @@ impl<'a> Parser<'a> {
             kind: StatementKind::ClassDeclaration {
                 name,
                 superclass,
-                members: methods,
+                members,
             },
             span: Span {
                 start,
@@ -585,18 +628,22 @@ impl<'a> Parser<'a> {
                 span: self.cur_token.span,
             },
             TokenKind::Literal(lit) => self.parse_literal(lit)?,
-            TokenKind::Operator(OperatorToken::Plus)
-            | TokenKind::Operator(OperatorToken::Minus)
-            | TokenKind::Operator(OperatorToken::Bang)
-            | TokenKind::Operator(OperatorToken::BitwiseNot) => self.parse_prefix()?,
+            TokenKind::Operator(
+                OperatorToken::Plus
+                | OperatorToken::Minus
+                | OperatorToken::Bang
+                | OperatorToken::BitwiseNot,
+            ) => self.parse_prefix()?,
             TokenKind::Delimiter(DelimiterToken::LParen) => self.parse_grouped()?,
             TokenKind::Delimiter(DelimiterToken::LBracket) => self.parse_array()?,
             TokenKind::Delimiter(DelimiterToken::LBrace) => self.parse_object()?, // またはblock
             _ => {
-                return Err(ParseError::UnexpectedToken {
-                    expected: "Expression".into(),
-                    found: self.cur_token.clone(),
-                });
+                return Err(SnowFallError::new_compiler_error(
+                    format!("Unexpected token for expression: {:?}", self.cur_token),
+                    "SF0015".to_string(),
+                    self.lexer.line,
+                    self.lexer.column,
+                ));
             }
         };
 

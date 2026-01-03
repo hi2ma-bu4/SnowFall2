@@ -229,30 +229,27 @@ test("Lexer Test", async (t) => {
 	});
 
 	await t.test("should tokenize Illegal Number Literals", () => {
-		const data = {
-			"1_": "Int",
-			"1_.0": "Float",
-			"1._0": "Float",
-			"1..0": "Float",
-			"0xZ": "Int",
-			"0x0.Z": "Float",
-			"0x.01": "Float",
-			"0b2": "Int",
-			"0b0.2": "Float",
-			"0b.01": "Float",
-		};
-		const input = Object.keys(data);
-		const expectedTokens = Object.values(data).map((type) => ({ type }));
+		const data = [
+			//
+			"1_",
+			"1_.0",
+			"1._0",
+			"0xZ",
+			"0x0.Z",
+			"0x.01",
+			"0b2",
+			"0b0.2",
+			"0b.01",
+		];
 
-		for (let i = 0; i < input.length; i++) {
-			const tokens = sf.dev_lexer(input[i]);
-
-			if (tokens.length !== 1) {
-				assert.notStrictEqual(tokens.length, 1, `Token [${input[i]}] length mismatch: ${JSON.stringify(tokens)}`);
-				continue;
-			}
-
-			assert.notStrictEqual(tokens[0].kind.type, expectedTokens[i].type, `Token [${input[i]}] type match: ${JSON.stringify(tokens)}`);
+		for (const input of data) {
+			assert.throws(
+				() => {
+					sf.dev_lexer(input);
+				},
+				new RegExp("Lexer error"),
+				`Expected lexer to throw for input: ${input}`
+			);
 		}
 	});
 
@@ -289,18 +286,21 @@ test("Lexer Test", async (t) => {
 	});
 
 	await t.test("should tokenize Illegal String Literals", () => {
-		const data: Record<string, number> = {
+		const data = [
 			//
-			'"""': 1,
-			"'''": 1,
-			'"\\" "hoge"': 2,
-		};
-		const input = Object.keys(data);
+			'"""',
+			"'''",
+			'"\\',
+		];
 
-		for (let i = 0; i < input.length; i++) {
-			const tokens = sf.dev_lexer(input[i]);
-
-			assert.notStrictEqual(tokens.length, data[input[i]], `Token [${input[i]}] type match: ${JSON.stringify(tokens)}`);
+		for (const input of data) {
+			assert.throws(
+				() => {
+					sf.dev_lexer(input);
+				},
+				new RegExp("Lexer error"),
+				`Expected lexer to throw for input: ${input}`
+			);
 		}
 	});
 
@@ -331,17 +331,20 @@ test("Lexer Test", async (t) => {
 	});
 
 	await t.test("should tokenize Illegal Identifier", () => {
-		const data = {
-			あいうえお: "Identifier",
-			"🍣🍺": "Identifier",
-		};
-		const input = Object.keys(data);
-		const expectedTokens = Object.values(data).map((type) => ({ type }));
+		const data = [
+			//
+			"あいうえお",
+			"🍣🍺",
+		];
 
-		for (let i = 0; i < input.length; i++) {
-			const tokens = sf.dev_lexer(input[i]);
-
-			assert.notStrictEqual(tokens[0].kind.type, expectedTokens[i].type, `Token [${Object.keys(data)[i]}] type mismatch`);
+		for (const input of data) {
+			assert.throws(
+				() => {
+					sf.dev_lexer(input);
+				},
+				new RegExp("Lexer error"),
+				`Expected lexer to throw for input: ${input}`
+			);
 		}
 	});
 });

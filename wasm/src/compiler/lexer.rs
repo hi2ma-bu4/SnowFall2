@@ -1,5 +1,8 @@
 use crate::{
-    common::{DelimiterToken, KeywordToken, LiteralToken, OperatorToken, Token, TokenKind},
+    common::{
+        DelimiterToken, KeywordToken, LiteralToken, OperatorToken, Token, TokenKind,
+        error::SnowFallError,
+    },
     create_token,
 };
 
@@ -68,7 +71,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// 次のトークンを取得します
-    pub fn next_token(&mut self) -> Token {
+    pub fn next_token(&mut self) -> Result<Token, SnowFallError> {
         self.skip_whitespace();
 
         let start_pos = self.position;
@@ -79,262 +82,262 @@ impl<'a> Lexer<'a> {
                     if self.peek_char() == b'=' {
                         self.read_char();
                         // (===)
-                        create_token!(
+                        Ok(create_token!(
                             TokenKind::Operator(OperatorToken::StrictEqual),
                             start_pos,
                             self.position + 1
-                        )
+                        ))
                     } else {
                         // (==)
-                        create_token!(
+                        Ok(create_token!(
                             TokenKind::Operator(OperatorToken::Equal),
                             start_pos,
                             self.position + 1
-                        )
+                        ))
                     }
                 } else {
                     // (=)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::Assign),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 }
             }
-            b'+' => create_token!(
+            b'+' => Ok(create_token!(
                 TokenKind::Operator(OperatorToken::Plus),
                 start_pos,
                 self.position + 1
-            ),
-            b'-' => create_token!(
+            )),
+            b'-' => Ok(create_token!(
                 TokenKind::Operator(OperatorToken::Minus),
                 start_pos,
                 self.position + 1
-            ),
+            )),
             b'*' => {
                 if self.peek_char() == b'*' {
                     self.read_char();
                     // (**)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::Power),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 } else {
                     // (*)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::Asterisk),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 }
             }
-            b'/' => create_token!(
+            b'/' => Ok(create_token!(
                 TokenKind::Operator(OperatorToken::Slash),
                 start_pos,
                 self.position + 1
-            ),
-            b'%' => create_token!(
+            )),
+            b'%' => Ok(create_token!(
                 TokenKind::Operator(OperatorToken::Percent),
                 start_pos,
                 self.position + 1
-            ),
+            )),
             b'!' => {
                 if self.peek_char() == b'=' {
                     self.read_char();
                     if self.peek_char() == b'=' {
                         self.read_char();
                         // (!==)
-                        create_token!(
+                        Ok(create_token!(
                             TokenKind::Operator(OperatorToken::StrictNotEqual),
                             start_pos,
                             self.position + 1
-                        )
+                        ))
                     } else {
                         // (!=)
-                        create_token!(
+                        Ok(create_token!(
                             TokenKind::Operator(OperatorToken::NotEqual),
                             start_pos,
                             self.position + 1
-                        )
+                        ))
                     }
                 } else {
                     // (!)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::Bang),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 }
             }
             b'<' => {
                 if self.peek_char() == b'=' {
                     self.read_char();
                     // (<=)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::LessThanOrEqual),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 } else if self.peek_char() == b'<' {
                     self.read_char();
                     if self.peek_char() == b'<' {
                         self.read_char();
                         // (<<<)
-                        create_token!(
+                        Ok(create_token!(
                             TokenKind::Operator(OperatorToken::BitwiseUnsignedLeftShift),
                             start_pos,
                             self.position + 1
-                        )
+                        ))
                     } else {
                         // (<<)
-                        create_token!(
+                        Ok(create_token!(
                             TokenKind::Operator(OperatorToken::BitwiseLeftShift),
                             start_pos,
                             self.position + 1
-                        )
+                        ))
                     }
                 } else {
                     // (<)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::LessThan),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 }
             }
             b'>' => {
                 if self.peek_char() == b'=' {
                     self.read_char();
                     // (>=)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::GreaterThanOrEqual),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 } else if self.peek_char() == b'>' {
                     self.read_char();
                     if self.peek_char() == b'>' {
                         self.read_char();
                         // (>>>)
-                        create_token!(
+                        Ok(create_token!(
                             TokenKind::Operator(OperatorToken::BitwiseUnsignedRightShift),
                             start_pos,
                             self.position + 1
-                        )
+                        ))
                     } else {
                         // (>>)
-                        create_token!(
+                        Ok(create_token!(
                             TokenKind::Operator(OperatorToken::BitwiseRightShift),
                             start_pos,
                             self.position + 1
-                        )
+                        ))
                     }
                 } else {
                     // (>)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::GreaterThan),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 }
             }
-            b'.' => create_token!(
+            b'.' => Ok(create_token!(
                 TokenKind::Delimiter(DelimiterToken::Dot),
                 start_pos,
                 self.position + 1
-            ),
-            b',' => create_token!(
+            )),
+            b',' => Ok(create_token!(
                 TokenKind::Delimiter(DelimiterToken::Comma),
                 start_pos,
                 self.position + 1
-            ),
-            b':' => create_token!(
+            )),
+            b':' => Ok(create_token!(
                 TokenKind::Delimiter(DelimiterToken::Colon),
                 start_pos,
                 self.position + 1
-            ),
-            b';' => create_token!(
+            )),
+            b';' => Ok(create_token!(
                 TokenKind::Delimiter(DelimiterToken::Semicolon),
                 start_pos,
                 self.position + 1
-            ),
-            b'(' => create_token!(
+            )),
+            b'(' => Ok(create_token!(
                 TokenKind::Delimiter(DelimiterToken::LParen),
                 start_pos,
                 self.position + 1
-            ),
-            b')' => create_token!(
+            )),
+            b')' => Ok(create_token!(
                 TokenKind::Delimiter(DelimiterToken::RParen),
                 start_pos,
                 self.position + 1
-            ),
-            b'{' => create_token!(
+            )),
+            b'{' => Ok(create_token!(
                 TokenKind::Delimiter(DelimiterToken::LBrace),
                 start_pos,
                 self.position + 1
-            ),
-            b'}' => create_token!(
+            )),
+            b'}' => Ok(create_token!(
                 TokenKind::Delimiter(DelimiterToken::RBrace),
                 start_pos,
                 self.position + 1
-            ),
-            b'[' => create_token!(
+            )),
+            b'[' => Ok(create_token!(
                 TokenKind::Delimiter(DelimiterToken::LBracket),
                 start_pos,
                 self.position + 1
-            ),
-            b']' => create_token!(
+            )),
+            b']' => Ok(create_token!(
                 TokenKind::Delimiter(DelimiterToken::RBracket),
                 start_pos,
                 self.position + 1
-            ),
+            )),
             b'&' => {
                 if self.peek_char() == b'&' {
                     self.read_char();
                     // (&&)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::LogicalAnd),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 } else {
                     // (&)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::BitwiseAnd),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 }
             }
             b'|' => {
                 if self.peek_char() == b'|' {
                     self.read_char();
                     // (||)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::LogicalOr),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 } else {
                     // (|)
-                    create_token!(
+                    Ok(create_token!(
                         TokenKind::Operator(OperatorToken::BitwiseOr),
                         start_pos,
                         self.position + 1
-                    )
+                    ))
                 }
             }
-            b'^' => create_token!(
+            b'^' => Ok(create_token!(
                 TokenKind::Operator(OperatorToken::BitwiseXor),
                 start_pos,
                 self.position + 1
-            ),
-            b'~' => create_token!(
+            )),
+            b'~' => Ok(create_token!(
                 TokenKind::Operator(OperatorToken::BitwiseNot),
                 start_pos,
                 self.position + 1
-            ),
+            )),
             b'"' => self.read_string(),
             b'\'' => self.read_string(),
             b'0'..=b'9' => return self.read_number(),
@@ -366,14 +369,19 @@ impl<'a> Lexer<'a> {
                     "or" => TokenKind::Keyword(KeywordToken::Or),
                     _ => TokenKind::Identifier(ident),
                 };
-                return create_token!(kind, start_pos, self.position + 1);
+                return Ok(create_token!(kind, start_pos, self.position + 1));
             }
-            0 => Token::eof(start_pos),
-            _ => create_token!(
-                TokenKind::Illegal(self.ch.to_string()),
-                start_pos,
-                self.position + 1
-            ),
+            0 => Ok(Token::eof(start_pos)),
+            _ => {
+                let error_tok = self.ch;
+                self.read_char();
+                return Err(SnowFallError::new_compiler_error(
+                    format!("Unexpected character: {}", error_tok as char),
+                    "SF0001".to_string(),
+                    self.line,
+                    self.column,
+                ));
+            }
         };
 
         self.read_char();
@@ -420,7 +428,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// 数字リテラルを読み取ります (整数および浮動小数点数)
-    fn read_number(&mut self) -> Token {
+    fn read_number(&mut self) -> Result<Token, SnowFallError> {
         // 基数の接頭辞を確認する
         if self.ch == b'0' {
             match self.peek_char() {
@@ -442,22 +450,24 @@ impl<'a> Lexer<'a> {
                 b'_' => {
                     // 先頭 or '.' 直後は NG
                     if number_str.is_empty() || !prev_was_digit {
-                        return create_token!(
-                            TokenKind::Illegal(number_str),
-                            start_pos,
-                            self.position + 1
-                        );
+                        return Err(SnowFallError::new_compiler_error(
+                            "Invalid number format: misplaced underscore".to_string(),
+                            "SF0002".to_string(),
+                            self.line,
+                            self.column,
+                        ));
                     }
                     prev_was_underscore = true;
                 }
                 b'.' => {
                     // '_' 直後は NG
                     if prev_was_underscore {
-                        return create_token!(
-                            TokenKind::Illegal(number_str),
-                            start_pos,
-                            self.position + 1
-                        );
+                        return Err(SnowFallError::new_compiler_error(
+                            "Invalid number format: misplaced underscore".to_string(),
+                            "SF0002".to_string(),
+                            self.line,
+                            self.column,
+                        ));
                     }
                     dot_count += 1;
                     if dot_count > 1 {
@@ -479,22 +489,33 @@ impl<'a> Lexer<'a> {
 
         // 末尾 '_' は NG
         if prev_was_underscore {
-            return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
+            return Err(SnowFallError::new_compiler_error(
+                "Invalid number format: misplaced underscore".to_string(),
+                "SF0002".to_string(),
+                self.line,
+                self.column,
+            ));
         }
 
         if dot_count >= 1 {
             let (int_str, frac_str) = match number_str.split_once('.') {
                 Some(v) => v,
                 None => {
-                    return create_token!(
-                        TokenKind::Illegal(number_str),
-                        start_pos,
-                        self.position + 1
-                    );
+                    return Err(SnowFallError::new_compiler_error(
+                        "Invalid float format".to_string(),
+                        "SF0002".to_string(),
+                        self.line,
+                        self.column,
+                    ));
                 }
             };
             if int_str.is_empty() && frac_str.is_empty() {
-                return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
+                return Err(SnowFallError::new_compiler_error(
+                    "Invalid float format".to_string(),
+                    "SF0002".to_string(),
+                    self.line,
+                    self.column,
+                ));
             }
 
             if int_str.is_empty() {
@@ -504,31 +525,37 @@ impl<'a> Lexer<'a> {
             }
 
             match number_str.parse::<f64>() {
-                Ok(f) => create_token!(
+                Ok(f) => Ok(create_token!(
                     TokenKind::Literal(LiteralToken::Float(f)),
                     start_pos,
                     self.position + 1
-                ),
-                Err(_) => {
-                    create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1)
-                }
+                )),
+                Err(_) => Err(SnowFallError::new_compiler_error(
+                    format!("Failed to parse float: {}", number_str),
+                    "SF0002".to_string(),
+                    self.line,
+                    self.column,
+                )),
             }
         } else {
             match number_str.parse::<i64>() {
-                Ok(i) => create_token!(
+                Ok(i) => Ok(create_token!(
                     TokenKind::Literal(LiteralToken::Int(i)),
                     start_pos,
                     self.position + 1
-                ),
-                Err(_) => {
-                    create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1)
-                }
+                )),
+                Err(_) => Err(SnowFallError::new_compiler_error(
+                    format!("Failed to parse integer: {}", number_str),
+                    "SF0002".to_string(),
+                    self.line,
+                    self.column,
+                )),
             }
         }
     }
 
     /// 16進数リテラルを読み取ります
-    fn read_hex_number(&mut self) -> Token {
+    fn read_hex_number(&mut self) -> Result<Token, SnowFallError> {
         self.read_char(); // skip '0'
         self.read_char(); // skip 'x'
 
@@ -545,22 +572,24 @@ impl<'a> Lexer<'a> {
                 b'_' => {
                     // 先頭 or '.' 直後は NG
                     if number_str.is_empty() || !prev_was_digit {
-                        return create_token!(
-                            TokenKind::Illegal(number_str),
-                            start_pos,
-                            self.position + 1
-                        );
+                        return Err(SnowFallError::new_compiler_error(
+                            "Invalid hex format: misplaced underscore".to_string(),
+                            "SF0002".to_string(),
+                            self.line,
+                            self.column,
+                        ));
                     }
                     prev_was_underscore = true;
                 }
                 b'.' => {
                     // '_' 直後は NG
                     if prev_was_underscore {
-                        return create_token!(
-                            TokenKind::Illegal(number_str),
-                            start_pos,
-                            self.position + 1
-                        );
+                        return Err(SnowFallError::new_compiler_error(
+                            "Invalid hex format: misplaced underscore".to_string(),
+                            "SF0002".to_string(),
+                            self.line,
+                            self.column,
+                        ));
                     }
                     dot_count += 1;
                     if dot_count > 1 {
@@ -582,7 +611,21 @@ impl<'a> Lexer<'a> {
 
         // 末尾 '_' は NG
         if prev_was_underscore {
-            return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
+            return Err(SnowFallError::new_compiler_error(
+                "Invalid hex format: misplaced underscore".to_string(),
+                "SF0002".to_string(),
+                self.line,
+                self.column,
+            ));
+        }
+
+        if self.ch.is_ascii_alphabetic() {
+            return Err(SnowFallError::new_compiler_error(
+                format!("Invalid character in hex literal: {}", self.ch as char),
+                "SF0002".to_string(),
+                self.line,
+                self.column,
+            ));
         }
 
         // 0xf.f のような16進浮動小数点数を処理します
@@ -591,26 +634,33 @@ impl<'a> Lexer<'a> {
             let (int_str, frac_str) = match number_str.split_once('.') {
                 Some(v) => v,
                 None => {
-                    return create_token!(
-                        TokenKind::Illegal(number_str),
-                        start_pos,
-                        self.position + 1
-                    );
+                    return Err(SnowFallError::new_compiler_error(
+                        "Invalid hex float format".to_string(),
+                        "SF0002".to_string(),
+                        self.line,
+                        self.column,
+                    ));
                 }
             };
 
             if int_str.is_empty() {
-                return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
+                return Err(SnowFallError::new_compiler_error(
+                    "Invalid hex float format".to_string(),
+                    "SF0002".to_string(),
+                    self.line,
+                    self.column,
+                ));
             }
 
             let integer_part = match i64::from_str_radix(int_str, 16) {
                 Ok(v) => v as f64,
                 Err(_) => {
-                    return create_token!(
-                        TokenKind::Illegal(number_str),
-                        start_pos,
-                        self.position + 1
-                    );
+                    return Err(SnowFallError::new_compiler_error(
+                        format!("Failed to parse hex integer part: {}", int_str),
+                        "SF0002".to_string(),
+                        self.line,
+                        self.column,
+                    ));
                 }
             };
 
@@ -621,36 +671,42 @@ impl<'a> Lexer<'a> {
                 let digit = match c.to_digit(16) {
                     Some(d) => d as f64,
                     None => {
-                        return create_token!(
-                            TokenKind::Illegal(number_str),
-                            start_pos,
-                            self.position + 1
-                        );
+                        return Err(SnowFallError::new_compiler_error(
+                            format!("Invalid hex digit in fractional part: {}", c),
+                            "SF0002".to_string(),
+                            self.line,
+                            self.column,
+                        ));
                     }
                 };
                 fractional_part += digit / base;
                 base *= 16.0;
             }
 
-            return create_token!(
+            return Ok(create_token!(
                 TokenKind::Literal(LiteralToken::Float(integer_part + fractional_part)),
                 start_pos,
                 self.position + 1
-            );
+            ));
         }
 
         match i64::from_str_radix(&number_str, 16) {
-            Ok(i) => create_token!(
+            Ok(i) => Ok(create_token!(
                 TokenKind::Literal(LiteralToken::Int(i)),
                 start_pos,
                 self.position + 1
-            ),
-            Err(_) => create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1),
+            )),
+            Err(_) => Err(SnowFallError::new_compiler_error(
+                format!("Failed to parse hex integer: {}", number_str),
+                "SF0002".to_string(),
+                self.line,
+                self.column,
+            )),
         }
     }
 
     /// 2進数リテラルを読み取ります
-    fn read_binary_number(&mut self) -> Token {
+    fn read_binary_number(&mut self) -> Result<Token, SnowFallError> {
         self.read_char(); // skip '0'
         self.read_char(); // skip 'b'
 
@@ -667,22 +723,24 @@ impl<'a> Lexer<'a> {
                 b'_' => {
                     // 先頭 or '.' 直後は NG
                     if number_str.is_empty() || !prev_was_digit {
-                        return create_token!(
-                            TokenKind::Illegal(number_str),
-                            start_pos,
-                            self.position + 1
-                        );
+                        return Err(SnowFallError::new_compiler_error(
+                            "Invalid binary format: misplaced underscore".to_string(),
+                            "SF0002".to_string(),
+                            self.line,
+                            self.column,
+                        ));
                     }
                     prev_was_underscore = true;
                 }
                 b'.' => {
                     // '_' 直後は NG
                     if prev_was_underscore {
-                        return create_token!(
-                            TokenKind::Illegal(number_str),
-                            start_pos,
-                            self.position + 1
-                        );
+                        return Err(SnowFallError::new_compiler_error(
+                            "Invalid binary format: misplaced underscore".to_string(),
+                            "SF0002".to_string(),
+                            self.line,
+                            self.column,
+                        ));
                     }
                     dot_count += 1;
                     if dot_count > 1 {
@@ -704,7 +762,21 @@ impl<'a> Lexer<'a> {
 
         // 末尾 '_' は NG
         if prev_was_underscore {
-            return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
+            return Err(SnowFallError::new_compiler_error(
+                "Invalid binary format: misplaced underscore".to_string(),
+                "SF0002".to_string(),
+                self.line,
+                self.column,
+            ));
+        }
+
+        if self.ch.is_ascii_alphanumeric() {
+            return Err(SnowFallError::new_compiler_error(
+                format!("Invalid character in binary literal: {}", self.ch as char),
+                "SF0002".to_string(),
+                self.line,
+                self.column,
+            ));
         }
 
         // 0b1.1 のような2進浮動小数点数を処理します
@@ -713,26 +785,33 @@ impl<'a> Lexer<'a> {
             let (int_str, frac_str) = match number_str.split_once('.') {
                 Some(v) => v,
                 None => {
-                    return create_token!(
-                        TokenKind::Illegal(number_str),
-                        start_pos,
-                        self.position + 1
-                    );
+                    return Err(SnowFallError::new_compiler_error(
+                        "Invalid binary float format".to_string(),
+                        "SF0002".to_string(),
+                        self.line,
+                        self.column,
+                    ));
                 }
             };
 
             if int_str.is_empty() {
-                return create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1);
+                return Err(SnowFallError::new_compiler_error(
+                    "Invalid binary float format".to_string(),
+                    "SF0002".to_string(),
+                    self.line,
+                    self.column,
+                ));
             }
 
             let integer_part = match i64::from_str_radix(int_str, 2) {
                 Ok(v) => v as f64,
                 Err(_) => {
-                    return create_token!(
-                        TokenKind::Illegal(number_str),
-                        start_pos,
-                        self.position + 1
-                    );
+                    return Err(SnowFallError::new_compiler_error(
+                        format!("Failed to parse binary integer part: {}", int_str),
+                        "SF0002".to_string(),
+                        self.line,
+                        self.column,
+                    ));
                 }
             };
 
@@ -744,35 +823,41 @@ impl<'a> Lexer<'a> {
                     '0' => 0.0,
                     '1' => 1.0,
                     _ => {
-                        return create_token!(
-                            TokenKind::Illegal(number_str),
-                            start_pos,
-                            self.position + 1
-                        );
+                        return Err(SnowFallError::new_compiler_error(
+                            format!("Invalid binary digit in fractional part: {}", c),
+                            "SF0002".to_string(),
+                            self.line,
+                            self.column,
+                        ));
                     }
                 };
                 fractional_part += digit / base;
                 base *= 2.0;
             }
 
-            return create_token!(
+            return Ok(create_token!(
                 TokenKind::Literal(LiteralToken::Float(integer_part + fractional_part)),
                 start_pos,
                 self.position + 1
-            );
+            ));
         }
 
         match i64::from_str_radix(&number_str, 2) {
-            Ok(i) => create_token!(
+            Ok(i) => Ok(create_token!(
                 TokenKind::Literal(LiteralToken::Int(i)),
                 start_pos,
                 self.position + 1
-            ),
-            Err(_) => create_token!(TokenKind::Illegal(number_str), start_pos, self.position + 1),
+            )),
+            Err(_) => Err(SnowFallError::new_compiler_error(
+                format!("Failed to parse binary integer: {}", number_str),
+                "SF0002".to_string(),
+                self.line,
+                self.column,
+            )),
         }
     }
 
-    fn read_string(&mut self) -> Token {
+    fn read_string(&mut self) -> Result<Token, SnowFallError> {
         let start_pos = self.position;
 
         let quote_char: u8 = self.ch;
@@ -783,12 +868,22 @@ impl<'a> Lexer<'a> {
             old_ch = self.ch;
             self.read_char();
         }
+
+        if self.ch == 0 {
+            return Err(SnowFallError::new_compiler_error(
+                "Unterminated string".to_string(),
+                "SF0003".to_string(),
+                self.line,
+                self.column,
+            ));
+        }
+
         let s = self.input[position..self.position].to_string();
 
-        create_token!(
+        Ok(create_token!(
             TokenKind::Literal(LiteralToken::String(s)),
             start_pos,
-            self.position + 1
-        )
+            self.position
+        ))
     }
 }

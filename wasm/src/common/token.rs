@@ -10,10 +10,6 @@ pub enum TokenKind {
     // 特殊トークン (Special Tokens)
     /// 入力の終端を表すトークン
     Eof,
-    /// 不正なトークン
-    ///
-    /// 内容にはエラーメッセージや元文字列が入る。
-    Illegal(String),
     /// 識別子 (変数名・関数名・型名など)
     Identifier(String),
     /// リテラル値

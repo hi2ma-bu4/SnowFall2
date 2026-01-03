@@ -45,6 +45,19 @@ impl SnowFallError {
         }
     }
 
+    /// `CompilationError` 型の `SnowFallError` を生成するためのファクトリ関数
+    pub fn new_compiler_error(message: String, code: String, line: u32, column: u32) -> Self {
+        Self {
+            r#type: "CompilationError".to_string(),
+            message,
+            code,
+            line,
+            column,
+            trace: Vec::new(),
+            context: None,
+        }
+    }
+
     /// `RuntimeError` 型の `SnowFallError` を生成するためのファクトリ関数
     /// この関数は、動的にキャプチャされたスタックトレースを受け取り、
     /// エラーオブジェクトに含めることができます。これにより、WasmからTSへ
