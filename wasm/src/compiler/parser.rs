@@ -4,7 +4,7 @@ use crate::common::{
 };
 use crate::compiler::Lexer;
 use crate::compiler::ast::{
-    Expression, ExpressionKind, FunctionKind, InfixOperator, Parameter, PrefixOperator, Program,
+    Expression, ExpressionKind, FunctionKind, InfixOperator, Parameter, PrefixOperator, ProgramAst,
     Statement, StatementKind, VariableDeclarator,
 };
 
@@ -186,7 +186,7 @@ impl<'a> Parser<'a> {
     // ===== エントリーポイント =====
 
     /// ソース全体を解析し `Program` を生成する
-    pub fn parse_program(&mut self) -> Result<Program, Vec<SnowFallError>> {
+    pub fn parse_program(&mut self) -> Result<ProgramAst, Vec<SnowFallError>> {
         let mut statements = Vec::new();
         let start = self.cur_token.span.start;
 
@@ -211,7 +211,7 @@ impl<'a> Parser<'a> {
             start
         };
 
-        Ok(Program {
+        Ok(ProgramAst {
             statements,
             span: Span { start, end },
         })

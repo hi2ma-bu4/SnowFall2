@@ -1,5 +1,5 @@
 import init, * as wasm from "../pkg/snowfall_core";
-import type { Token } from "./const/types";
+import type { ParserResult, Token } from "./const/types";
 import { Logger } from "./libs/Logger";
 import { compareVersion, parseSemVer } from "./libs/version_check";
 import { VERSION } from "./version";
@@ -59,6 +59,10 @@ export class SnowFall {
 	}
 
 	/* ================================================== */
+	/* 公開機能 */
+	/* ================================================== */
+
+	/* ================================================== */
 	/* デバッグ用機能 */
 	/* ================================================== */
 
@@ -66,11 +70,22 @@ export class SnowFall {
 	 * デバッグ用のLexer関数
 	 * @param input ソースコードの文字列
 	 * @returns トークンの配列
-	 * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください。
+	 * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください
 	 */
 	public dev_lexer(input: string): Array<Token> {
 		const wasm = this.ensureInitialized();
 		return wasm.lexer(input);
+	}
+
+	/**
+	 * デバッグ用のParser(Lexer含む)関数
+	 * @param input ソースコードの文字列
+	 * @returns トークンの配列
+	 * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください
+	 */
+	public dev_parser(input: string): ParserResult {
+		const wasm = this.ensureInitialized();
+		return wasm.parser(input);
 	}
 
 	/* ================================================== */

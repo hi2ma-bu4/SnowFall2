@@ -4,6 +4,7 @@ declare function allocate_memory(size: number): number;
 declare function free_memory(ptr: number, size: number): void;
 declare function lexer(source: string): any;
 declare function main_init(): void;
+declare function parser(source: string): any;
 declare function version(): string;
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 export interface InitOutput {
@@ -16,6 +17,11 @@ export interface InitOutput {
 		number
 	];
 	readonly lexer: (a: number, b: number) => [
+		number,
+		number,
+		number
+	];
+	readonly parser: (a: number, b: number) => [
 		number,
 		number,
 		number
@@ -35,12 +41,21 @@ declare function __wbg_init(module_or_path?: {
 	module_or_path: InitInput | Promise<InitInput>;
 } | InitInput | Promise<InitInput>): Promise<InitOutput>;
 export interface Span {
-	start: number;
-	end: number;
+	start: Number;
+	end: Number;
+}
+export interface SnowFallErrorWasm {
+	type: String;
+	message: String;
+	code: String;
+	line: Number;
+	Column: Number;
+	trace: any[];
+	context?: Map<String, String>;
 }
 export type LiteralToken = {
 	type: "Int" | "Float";
-	value: number;
+	value: Number;
 } | {
 	type: "String";
 	value: String;
@@ -60,7 +75,7 @@ export type KeywordToken = {
 export type TokenKind = {
 	type: "Eof";
 } | {
-	type: "Illegal" | "Identifier";
+	type: "Identifier";
 	value: string;
 } | {
 	type: "Literal";
@@ -78,6 +93,201 @@ export type TokenKind = {
 export interface Token {
 	kind: TokenKind;
 	span: Span;
+}
+export type PrefixOperator = "Plus" | "Minus" | "Bang" | "BitwiseNot";
+export type InfixOperator = "Add" | "Subtract" | "Multiply" | "Divide" | "Modulo" | "Power" | "Equals" | "NotEquals" | "StrictEquals" | "StrictNotEquals" | "LessThan" | "GreaterThan" | "LessThanOrEqual" | "GreaterThanOrEqual" | "LogicalAnd" | "LogicalOr" | "LogicalAndAlso" | "LogicalOrElse" | "BitwiseAnd" | "BitwiseOr" | "BitwiseXor" | "BitwiseLeftShift" | "BitwiseRightShift" | "BitwiseUnsignedLeftShift" | "BitwiseUnsignedRightShift";
+export interface Prefix {
+	operator: PrefixOperator;
+	right: Expression;
+}
+export interface Infix {
+	left: Expression;
+	operator: InfixOperator;
+	right: Expression;
+}
+export interface Call {
+	function: Expression;
+	arguments: Expression[];
+}
+export interface Cast {
+	target_type: String;
+	expression: Expression;
+}
+export interface Index {
+	left: Expression;
+	index: Expression;
+}
+export interface Assignment {
+	left: Expression;
+	right: Expression;
+}
+export interface MemberAccess {
+	object: Expression;
+	property: Expression;
+	computed: Boolean;
+}
+export interface New {
+	class: Expression;
+	arguments: Expression[];
+}
+export type ExpressionKind = {
+	type: "IntLiteral";
+	value: number;
+} | {
+	type: "FloatLiteral";
+	value: number;
+} | {
+	type: "StringLiteral";
+	value: String;
+} | {
+	type: "Boolean";
+	value: Boolean;
+} | {
+	type: "Identifier";
+	value: String;
+} | {
+	type: "Prefix";
+	value: Prefix;
+} | {
+	type: "Infix";
+	value: Infix;
+} | {
+	type: "Call";
+	value: Call;
+} | {
+	type: "Cast";
+	value: Cast;
+} | {
+	type: "NullLiteral";
+} | {
+	type: "ArrayLiteral";
+	value: Expression[];
+} | {
+	type: "ObjectLiteral";
+	value: [
+		Expression,
+		Expression
+	][];
+} | {
+	type: "Index";
+	value: Index;
+} | {
+	type: "Assignment";
+	value: Assignment;
+} | {
+	type: "MemberAccess";
+	value: MemberAccess;
+} | {
+	type: "New";
+	value: New;
+};
+export interface Expression {
+	kind: ExpressionKind;
+	span: Span;
+}
+export interface VariableDeclarator {
+	name: String;
+	value?: Expression;
+}
+export interface Parameter {
+	name: String;
+	type_name: String;
+	value?: Expression;
+}
+export interface Binding {
+	name: String;
+	type_name: String;
+}
+export type FunctionKind = "Function" | "Sub";
+export type ForEachKind = "In" | "Of";
+export interface SwitchCase {
+	values: Expression[];
+	body: Statement;
+}
+export interface VariableDeclaration {
+	type_name: String;
+	declarators: VariableDeclarator[];
+}
+export interface FunctionDeclaration {
+	kind: FunctionKind;
+	name: String;
+	return_type?: String;
+	params: Parameter[];
+	body: Statement;
+}
+export interface ClassDeclaration {
+	name: String;
+	superclass?: String;
+	members: Statement[];
+}
+export interface If {
+	condition: Expression;
+	consequence: Statement;
+	alternative?: Statement;
+}
+export interface For {
+	init?: Statement;
+	condition?: Expression;
+	update?: Statement;
+	body: Statement;
+}
+export interface ForEach {
+	binding: Binding;
+	iterable: Expression;
+	kind: ForEachKind;
+	body: Statement;
+}
+export interface Switch {
+	expression: Expression;
+	cases: SwitchCase[];
+	default?: Statement;
+}
+export type StatementKind = {
+	type: "VariableDeclaration";
+	value: VariableDeclaration;
+} | {
+	type: "FunctionDeclaration";
+	value: FunctionDeclaration;
+} | {
+	type: "ClassDeclaration";
+	value: ClassDeclaration;
+} | {
+	type: "If";
+	value: If;
+} | {
+	type: "For";
+	value: For;
+} | {
+	type: "ForEach";
+	value: ForEach;
+} | {
+	type: "Switch";
+	value: Switch;
+} | {
+	type: "Return";
+	value?: Expression;
+} | {
+	type: "Break";
+} | {
+	type: "Continue";
+} | {
+	type: "Block";
+	value: Statement[];
+} | {
+	type: "Expression";
+	value: Expression;
+};
+export interface Statement {
+	kind: StatementKind;
+	span: Span;
+}
+export interface ProgramAst {
+	statements: Statement[];
+	span: Span;
+}
+export interface ParserResult {
+	ast?: ProgramAst;
+	errors?: SnowFallErrorWasm[];
 }
 export type WasmModule = typeof wasm & {
 	memory: WebAssembly.Memory;
@@ -100,9 +310,16 @@ export declare class SnowFall {
 	 * デバッグ用のLexer関数
 	 * @param input ソースコードの文字列
 	 * @returns トークンの配列
-	 * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください。
+	 * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください
 	 */
 	dev_lexer(input: string): Array<Token>;
+	/**
+	 * デバッグ用のParser(Lexer含む)関数
+	 * @param input ソースコードの文字列
+	 * @returns トークンの配列
+	 * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください
+	 */
+	dev_parser(input: string): ParserResult;
 	/**
 	 * バージョンチェック
 	 * @throws {Error}
@@ -111,7 +328,7 @@ export declare class SnowFall {
 }
 
 declare namespace wasm {
-	export { InitInput, InitOutput, SyncInitInput, __wbg_init as default, allocate_memory, free_memory, initSync, lexer, main_init, version };
+	export { InitInput, InitOutput, SyncInitInput, __wbg_init as default, allocate_memory, free_memory, initSync, lexer, main_init, parser, version };
 }
 
 export {};

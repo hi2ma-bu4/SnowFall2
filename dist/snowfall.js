@@ -1,5 +1,5 @@
 /*!
- * SnowFall2 v0.0.4
+ * SnowFall2 v0.0.5
  * Copyright 2026 hi2ma-bu4
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,6 +19,7 @@ __export(snowfall_core_exports, {
   initSync: () => initSync,
   lexer: () => lexer,
   main_init: () => main_init,
+  parser: () => parser,
   version: () => version
 });
 var wasm;
@@ -119,6 +120,15 @@ function lexer(source) {
 function main_init() {
   wasm.main_init();
 }
+function parser(source) {
+  const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.parser(ptr0, len0);
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1]);
+  }
+  return takeFromExternrefTable0(ret[0]);
+}
 function version() {
   let deferred1_0;
   let deferred1_1;
@@ -171,6 +181,10 @@ function __wbg_get_imports() {
     getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
     getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
   };
+  imports.wbg.__wbg___wbindgen_is_string_704ef9c8fc131030 = function(arg0) {
+    const ret = typeof arg0 === "string";
+    return ret;
+  };
   imports.wbg.__wbg___wbindgen_throw_dd24417ed36fc46e = function(arg0, arg1) {
     throw new Error(getStringFromWasm0(arg0, arg1));
   };
@@ -197,11 +211,19 @@ function __wbg_get_imports() {
     const ret = new Error();
     return ret;
   };
+  imports.wbg.__wbg_new_b546ae120718850e = function() {
+    const ret = /* @__PURE__ */ new Map();
+    return ret;
+  };
   imports.wbg.__wbg_set_3f1d0b984ed272ed = function(arg0, arg1, arg2) {
     arg0[arg1] = arg2;
   };
   imports.wbg.__wbg_set_7df433eea03a5c14 = function(arg0, arg1, arg2) {
     arg0[arg1 >>> 0] = arg2;
+  };
+  imports.wbg.__wbg_set_efaaf145b9377369 = function(arg0, arg1, arg2) {
+    const ret = arg0.set(arg1, arg2);
+    return ret;
   };
   imports.wbg.__wbg_stack_0ed75d68575b0f3c = function(arg0, arg1) {
     const ret = arg1.stack;
@@ -330,7 +352,7 @@ function compareVersion(tsV, rustV) {
 }
 
 // src/version.ts
-var VERSION = "v0.0.4";
+var VERSION = "v0.0.5";
 
 // src/snowfall.ts
 var SnowFall = class {
@@ -375,17 +397,30 @@ var SnowFall = class {
     return wasm2.version();
   }
   /* ================================================== */
+  /* 公開機能 */
+  /* ================================================== */
+  /* ================================================== */
   /* デバッグ用機能 */
   /* ================================================== */
   /**
    * デバッグ用のLexer関数
    * @param input ソースコードの文字列
    * @returns トークンの配列
-   * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください。
+   * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください
    */
   dev_lexer(input) {
     const wasm2 = this.ensureInitialized();
     return wasm2.lexer(input);
+  }
+  /**
+   * デバッグ用のParser(Lexer含む)関数
+   * @param input ソースコードの文字列
+   * @returns トークンの配列
+   * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください
+   */
+  dev_parser(input) {
+    const wasm2 = this.ensureInitialized();
+    return wasm2.parser(input);
   }
   /* ================================================== */
   /* 共通利用 */

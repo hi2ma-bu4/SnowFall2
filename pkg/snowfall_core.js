@@ -135,6 +135,21 @@ export function main_init() {
 }
 
 /**
+ * ソースコードを受け取り、解析したASTを返す
+ * @param {string} source
+ * @returns {any}
+ */
+export function parser(source) {
+    const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.parser(ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
  * @returns {string}
  */
 export function version() {
@@ -196,6 +211,10 @@ function __wbg_get_imports() {
         getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
         getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
     };
+    imports.wbg.__wbg___wbindgen_is_string_704ef9c8fc131030 = function(arg0) {
+        const ret = typeof(arg0) === 'string';
+        return ret;
+    };
     imports.wbg.__wbg___wbindgen_throw_dd24417ed36fc46e = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
@@ -222,11 +241,19 @@ function __wbg_get_imports() {
         const ret = new Error();
         return ret;
     };
+    imports.wbg.__wbg_new_b546ae120718850e = function() {
+        const ret = new Map();
+        return ret;
+    };
     imports.wbg.__wbg_set_3f1d0b984ed272ed = function(arg0, arg1, arg2) {
         arg0[arg1] = arg2;
     };
     imports.wbg.__wbg_set_7df433eea03a5c14 = function(arg0, arg1, arg2) {
         arg0[arg1 >>> 0] = arg2;
+    };
+    imports.wbg.__wbg_set_efaaf145b9377369 = function(arg0, arg1, arg2) {
+        const ret = arg0.set(arg1, arg2);
+        return ret;
     };
     imports.wbg.__wbg_stack_0ed75d68575b0f3c = function(arg0, arg1) {
         const ret = arg1.stack;

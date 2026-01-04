@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// プログラム全体を表すノード
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Program {
+pub struct ProgramAst {
     pub statements: Vec<Statement>,
     pub span: Span,
 }
@@ -18,6 +18,7 @@ pub struct Statement {
 
 /// 抽象構文木の文ノード
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "value")]
 pub enum StatementKind {
     /// 変数宣言: `Int a = 1, b = 2;`
     VariableDeclaration {
@@ -136,6 +137,7 @@ pub struct Expression {
 
 /// 抽象構文木の式ノード
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "value")]
 pub enum ExpressionKind {
     // 型
     IntLiteral(i64),

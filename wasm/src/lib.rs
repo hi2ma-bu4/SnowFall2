@@ -9,8 +9,10 @@ extern crate console_error_panic_hook;
 pub mod common;
 pub mod compiler;
 
+use crate::common::error::SnowFallError;
 use crate::common::{Token, TokenKind, constants};
-use crate::compiler::Lexer;
+use crate::compiler::ast::ProgramAst;
+use crate::compiler::{Lexer, Parser};
 
 /// ライブラリの初期化時に一度だけ呼び出されるべき関数。
 #[wasm_bindgen(start)]
@@ -40,11 +42,6 @@ pub fn version() -> String {
     constants::VERSION.to_string()
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct CompileOptions {
-    pub debug_info: bool,
-}
-
 /// ソースコードを受け取り、トークンのリストを返す
 #[wasm_bindgen]
 #[allow(deprecated, reason = "Dev関数では許容")]
@@ -70,4 +67,39 @@ pub fn lexer(source: &str) -> Result<JsValue, JsValue> {
 
     serde_wasm_bindgen::to_value(&tokens)
         .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
+}
+
+#[derive(Serialize)]
+pub struct ParserResult {
+    ast: Option<ProgramAst>,
+    errors: Option<Vec<SnowFallError>>,
+}
+
+/// ソースコードを受け取り、解析したASTを返す
+#[wasm_bindgen]
+#[allow(deprecated, reason = "Dev関数では許容")]
+#[deprecated(since = "1.0.0", note = "本番環境での使用は非推奨")]
+pub fn parser(source: &str) -> Result<JsValue, JsValue> {
+    let lexer = Lexer::new(source);
+    let mut parser = Parser::new(lexer);
+    let result = parser.parse_program();
+
+    let compile_result = match result {
+        Ok(program) => ParserResult {
+            ast: Some(program),
+            errors: None,
+        },
+        Err(errors) => ParserResult {
+            ast: None,
+            errors: Some(errors),
+        },
+    };
+
+    serde_wasm_bindgen::to_value(&compile_result)
+        .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct CompileOptions {
+    pub debug_info: bool,
 }
