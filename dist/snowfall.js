@@ -1,5 +1,5 @@
 /*!
- * SnowFall2 v0.0.7
+ * SnowFall2 v0.1.1
  * Copyright 2026 hi2ma-bu4
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -304,6 +304,29 @@ async function __wbg_init(module_or_path) {
 }
 var snowfall_core_default = __wbg_init;
 
+// src/common/SnowFallError.ts
+var SnowFallError = class extends Error {
+  type;
+  code;
+  line;
+  column;
+  trace;
+  context;
+  constructor(error) {
+    super(error.message);
+    this.name = this.constructor.name;
+    this.type = error.type;
+    this.code = error.code;
+    this.line = error.line;
+    this.column = error.column;
+    this.trace = error.trace;
+    this.context = error.context;
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+  }
+};
+
 // src/libs/Logger.ts
 var Logger = class {
   static isDebug = false;
@@ -352,7 +375,7 @@ function compareVersion(tsV, rustV) {
 }
 
 // src/version.ts
-var VERSION = "v0.0.7";
+var VERSION = "v0.1.1";
 
 // src/snowfall.ts
 var SnowFall = class {
@@ -420,7 +443,14 @@ var SnowFall = class {
    */
   dev_parser(input) {
     const wasm2 = this.ensureInitialized();
-    return wasm2.parser(input);
+    const result = wasm2.parser(input);
+    if (result.errors) {
+      return {
+        ...result,
+        errors: result.errors.map((err) => new SnowFallError(err))
+      };
+    }
+    return result;
   }
   /* ================================================== */
   /* 共通利用 */

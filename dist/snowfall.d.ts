@@ -41,27 +41,30 @@ declare function __wbg_init(module_or_path?: {
 	module_or_path: InitInput | Promise<InitInput>;
 } | InitInput | Promise<InitInput>): Promise<InitOutput>;
 export interface Span {
-	start: Number;
-	end: Number;
+	start: number;
+	end: number;
 }
-export interface SnowFallErrorWasm {
-	type: String;
-	message: String;
-	code: String;
-	line: Number;
-	Column: Number;
-	trace: any[];
-	context?: Map<String, String>;
+export interface SnowFallErrorContext {
+	[key: string]: string;
+}
+export interface ISnowFallError {
+	type: string;
+	message: string;
+	code: string;
+	line: number;
+	column: number;
+	trace: string[];
+	context?: SnowFallErrorContext;
 }
 export type LiteralToken = {
 	type: "Int" | "Float";
-	value: Number;
+	value: number;
 } | {
 	type: "String";
-	value: String;
+	value: string;
 } | {
 	type: "Boolean";
-	value: Boolean;
+	value: boolean;
 };
 export type OperatorToken = {
 	type: "Assign" | "Equal" | "StrictEqual" | "Plus" | "Minus" | "Asterisk" | "Power" | "Slash" | "Percent" | "Bang" | "NotEqual" | "StrictNotEqual" | "LessThan" | "LessThanOrEqual" | "GreaterThan" | "GreaterThanOrEqual" | "LogicalAnd" | "LogicalOr" | "BitwiseAnd" | "BitwiseOr" | "BitwiseXor" | "BitwiseNot" | "BitwiseLeftShift" | "BitwiseUnsignedLeftShift" | "BitwiseRightShift" | "BitwiseUnsignedRightShift";
@@ -110,7 +113,7 @@ export interface Call {
 	arguments: Expression[];
 }
 export interface Cast {
-	target_type: String;
+	target_type: string;
 	expression: Expression;
 }
 export interface Index {
@@ -138,13 +141,13 @@ export type ExpressionKind = {
 	value: number;
 } | {
 	type: "StringLiteral";
-	value: String;
+	value: string;
 } | {
 	type: "Boolean";
 	value: Boolean;
 } | {
 	type: "Identifier";
-	value: String;
+	value: string;
 } | {
 	type: "Prefix";
 	value: Prefix;
@@ -186,17 +189,17 @@ export interface Expression {
 	span: Span;
 }
 export interface VariableDeclarator {
-	name: String;
+	name: string;
 	value?: Expression;
 }
 export interface Parameter {
-	name: String;
-	type_name: String;
+	name: string;
+	type_name: string;
 	value?: Expression;
 }
 export interface Binding {
-	name: String;
-	type_name: String;
+	name: string;
+	type_name: string;
 }
 export type FunctionKind = "Function" | "Sub";
 export type ForEachKind = "In" | "Of";
@@ -205,19 +208,19 @@ export interface SwitchCase {
 	body: Statement;
 }
 export interface VariableDeclaration {
-	type_name: String;
+	type_name: string;
 	declarators: VariableDeclarator[];
 }
 export interface FunctionDeclaration {
 	kind: FunctionKind;
-	name: String;
-	return_type?: String;
+	name: string;
+	return_type?: string;
 	params: Parameter[];
 	body: Statement;
 }
 export interface ClassDeclaration {
-	name: String;
-	superclass?: String;
+	name: string;
+	superclass?: string;
 	members: Statement[];
 }
 export interface If {
@@ -287,7 +290,7 @@ export interface ProgramAst {
 }
 export interface ParserResult {
 	ast?: ProgramAst;
-	errors?: SnowFallErrorWasm[];
+	errors?: ISnowFallError[];
 }
 export type WasmModule = typeof wasm & {
 	memory: WebAssembly.Memory;

@@ -14,13 +14,13 @@ use crate::common::{Token, TokenKind, constants};
 use crate::compiler::ast::ProgramAst;
 use crate::compiler::{Lexer, Parser};
 
-/// ライブラリの初期化時に一度だけ呼び出されるべき関数。
+/// ライブラリの初期化時に一度だけ呼び出されるべき関数
 #[wasm_bindgen(start)]
 pub fn main_init() {
     console_error_panic_hook::set_once();
 }
 
-/// Wasmモジュールのメモリを確保し、そのポインタを返す。
+/// Wasmモジュールのメモリを確保し、そのポインタを返す
 #[wasm_bindgen]
 pub fn allocate_memory(size: usize) -> *mut u8 {
     let mut buffer = Vec::with_capacity(size);
@@ -29,7 +29,7 @@ pub fn allocate_memory(size: usize) -> *mut u8 {
     ptr
 }
 
-/// Wasmモジュール内の確保されたメモリを解放する。
+/// Wasmモジュール内の確保されたメモリを解放する
 #[wasm_bindgen]
 pub fn free_memory(ptr: *mut u8, size: usize) {
     unsafe {

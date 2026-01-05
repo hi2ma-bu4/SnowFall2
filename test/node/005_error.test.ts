@@ -30,4 +30,11 @@ test("Error Test", async (t) => {
 		assert.strictEqual(errors[0].code, "SF0015");
 		assert.strictEqual(errors[0].message, "Unexpected token for expression: Token { kind: Delimiter(Semicolon), span: Span { start: 13, end: 14 } }");
 	});
+
+	await t.test("should return an instance of Error", () => {
+		const code = `(Int) a = 1 +;`;
+		const { errors } = sf.dev_parser(code);
+		assert.ok(errors, "Expected a compiler error");
+		assert.ok(errors[0] instanceof Error, "Expected the error to be an instance of Error");
+	});
 });

@@ -1,5 +1,6 @@
 import init, * as wasm from "../pkg/snowfall_core";
-import type { ParserResult, Token } from "./const/types";
+import { SnowFallError } from "./common/SnowFallError";
+import type { ISnowFallError, ParserResult, Token } from "./common/types";
 import { Logger } from "./libs/Logger";
 import { compareVersion, parseSemVer } from "./libs/version_check";
 import { VERSION } from "./version";
@@ -85,7 +86,14 @@ export class SnowFall {
 	 */
 	public dev_parser(input: string): ParserResult {
 		const wasm = this.ensureInitialized();
-		return wasm.parser(input);
+		const result = wasm.parser(input) as ParserResult;
+		if (result.errors) {
+			return {
+				...result,
+				errors: result.errors.map((err: ISnowFallError) => new SnowFallError(err)),
+			};
+		}
+		return result;
 	}
 
 	/* ================================================== */

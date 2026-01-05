@@ -3,18 +3,22 @@
 /* ================================================== */
 
 export interface Span {
-	start: Number;
-	end: Number;
+	start: number;
+	end: number;
 }
 
-export interface SnowFallErrorWasm {
-	type: String;
-	message: String;
-	code: String;
-	line: Number;
-	Column: Number;
-	trace: any[];
-	context?: Map<String, String>;
+export interface SnowFallErrorContext {
+	[key: string]: string;
+}
+
+export interface ISnowFallError {
+	type: string;
+	message: string;
+	code: string;
+	line: number;
+	column: number;
+	trace: string[];
+	context?: SnowFallErrorContext;
 }
 
 /* ================================================== */
@@ -22,9 +26,9 @@ export interface SnowFallErrorWasm {
 /* ================================================== */
 
 export type LiteralToken =
-	| { type: "Int" | "Float"; value: Number } //
-	| { type: "String"; value: String }
-	| { type: "Boolean"; value: Boolean };
+	| { type: "Int" | "Float"; value: number } //
+	| { type: "String"; value: string }
+	| { type: "Boolean"; value: boolean };
 
 export type OperatorToken = {
 	type:
@@ -158,7 +162,7 @@ export interface Call {
 	arguments: Expression[];
 }
 export interface Cast {
-	target_type: String;
+	target_type: string;
 	expression: Expression;
 }
 export interface Index {
@@ -167,7 +171,7 @@ export interface Index {
 }
 export interface Member {
 	left: Expression;
-	property: String;
+	property: string;
 }
 export interface Assignment {
 	left: Expression;
@@ -186,9 +190,9 @@ export interface New {
 export type ExpressionKind =
 	| { type: "IntLiteral"; value: number } //
 	| { type: "FloatLiteral"; value: number }
-	| { type: "StringLiteral"; value: String }
+	| { type: "StringLiteral"; value: string }
 	| { type: "Boolean"; value: Boolean }
-	| { type: "Identifier"; value: String }
+	| { type: "Identifier"; value: string }
 	| { type: "Prefix"; value: Prefix }
 	| { type: "Infix"; value: Infix }
 	| { type: "Call"; value: Call }
@@ -207,17 +211,17 @@ export interface Expression {
 }
 
 export interface VariableDeclarator {
-	name: String;
+	name: string;
 	value?: Expression;
 }
 export interface Parameter {
-	name: String;
-	type_name: String;
+	name: string;
+	type_name: string;
 	value?: Expression;
 }
 export interface Binding {
-	name: String;
-	type_name: String;
+	name: string;
+	type_name: string;
 }
 export type FunctionKind = "Function" | "Sub";
 export type ForEachKind = "In" | "Of";
@@ -227,19 +231,19 @@ export interface SwitchCase {
 }
 
 export interface VariableDeclaration {
-	type_name: String;
+	type_name: string;
 	declarators: VariableDeclarator[];
 }
 export interface FunctionDeclaration {
 	kind: FunctionKind;
-	name: String;
-	return_type?: String;
+	name: string;
+	return_type?: string;
 	params: Parameter[];
 	body: Statement;
 }
 export interface ClassDeclaration {
-	name: String;
-	superclass?: String;
+	name: string;
+	superclass?: string;
 	members: Statement[];
 }
 export interface If {
@@ -291,5 +295,5 @@ export interface ProgramAst {
 
 export interface ParserResult {
 	ast?: ProgramAst;
-	errors?: SnowFallErrorWasm[];
+	errors?: ISnowFallError[];
 }

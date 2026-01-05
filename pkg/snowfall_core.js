@@ -94,7 +94,7 @@ if (!('encodeInto' in cachedTextEncoder)) {
 let WASM_VECTOR_LEN = 0;
 
 /**
- * Wasmモジュールのメモリを確保し、そのポインタを返す。
+ * Wasmモジュールのメモリを確保し、そのポインタを返す
  * @param {number} size
  * @returns {number}
  */
@@ -104,7 +104,7 @@ export function allocate_memory(size) {
 }
 
 /**
- * Wasmモジュール内の確保されたメモリを解放する。
+ * Wasmモジュール内の確保されたメモリを解放する
  * @param {number} ptr
  * @param {number} size
  */
@@ -128,7 +128,7 @@ export function lexer(source) {
 }
 
 /**
- * ライブラリの初期化時に一度だけ呼び出されるべき関数。
+ * ライブラリの初期化時に一度だけ呼び出されるべき関数
  */
 export function main_init() {
     wasm.main_init();

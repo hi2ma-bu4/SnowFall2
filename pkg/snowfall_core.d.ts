@@ -2,12 +2,12 @@
 /* eslint-disable */
 
 /**
- * Wasmモジュールのメモリを確保し、そのポインタを返す。
+ * Wasmモジュールのメモリを確保し、そのポインタを返す
  */
 export function allocate_memory(size: number): number;
 
 /**
- * Wasmモジュール内の確保されたメモリを解放する。
+ * Wasmモジュール内の確保されたメモリを解放する
  */
 export function free_memory(ptr: number, size: number): void;
 
@@ -17,7 +17,7 @@ export function free_memory(ptr: number, size: number): void;
  */export function lexer(source: string): any;
 
 /**
- * ライブラリの初期化時に一度だけ呼び出されるべき関数。
+ * ライブラリの初期化時に一度だけ呼び出されるべき関数
  */
 export function main_init(): void;
 
