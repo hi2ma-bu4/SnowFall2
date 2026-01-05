@@ -1,5 +1,5 @@
 /*!
- * SnowFall2 v0.0.5
+ * SnowFall2 v0.0.6
  * Copyright 2026 hi2ma-bu4
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -352,7 +352,7 @@ function compareVersion(tsV, rustV) {
 }
 
 // src/version.ts
-var VERSION = "v0.0.5";
+var VERSION = "v0.0.6";
 
 // src/snowfall.ts
 var SnowFall = class {

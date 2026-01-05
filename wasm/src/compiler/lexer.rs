@@ -6,6 +6,7 @@ use crate::{
     create_token,
 };
 
+#[derive(Clone)]
 pub struct Lexer<'a> {
     input: &'a str,
     /// 入力内の現在位置 (現在の文字を指します)

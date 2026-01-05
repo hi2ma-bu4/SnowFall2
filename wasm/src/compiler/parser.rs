@@ -4,8 +4,8 @@ use crate::common::{
 };
 use crate::compiler::Lexer;
 use crate::compiler::ast::{
-    Expression, ExpressionKind, FunctionKind, InfixOperator, Parameter, PrefixOperator, ProgramAst,
-    Statement, StatementKind, VariableDeclarator,
+    Binding, Expression, ExpressionKind, ForEachKind, FunctionKind, InfixOperator, Parameter,
+    PrefixOperator, ProgramAst, Statement, StatementKind, VariableDeclarator,
 };
 
 /// 演算の優先順位
@@ -223,6 +223,7 @@ impl<'a> Parser<'a> {
             TokenKind::Keyword(KeywordToken::Function) => self.parse_function_declaration(),
             TokenKind::Keyword(KeywordToken::Sub) => self.parse_sub_declaration(),
             TokenKind::Keyword(KeywordToken::Class) => self.parse_class_declaration(),
+            TokenKind::Keyword(KeywordToken::For) => self.parse_for_statement(),
             TokenKind::Keyword(KeywordToken::If) => self.parse_if_statement(),
             TokenKind::Keyword(KeywordToken::While) => self.parse_while_statement(),
             TokenKind::Keyword(KeywordToken::Return) => self.parse_return_statement(),
@@ -539,6 +540,220 @@ impl<'a> Parser<'a> {
         })
     }
 
+    /// for 文を解析する
+    fn parse_for_statement(&mut self) -> ParseResult<Statement> {
+        let start = self.cur_token.span.start;
+        self.expect_peek(TokenKind::Delimiter(DelimiterToken::LParen))?;
+        self.next_token();
+
+        if self.is_for_each_loop() {
+            // forEach 文
+            let binding = {
+                let name = if let TokenKind::Identifier(ref s) = self.cur_token.kind {
+                    s.clone()
+                } else {
+                    return Err(SnowFallError::new_compiler_error(
+                        "Expected identifier in for-each loop".to_string(),
+                        "SF0016".to_string(),
+                        self.lexer.line,
+                        self.lexer.column,
+                    ));
+                };
+                Binding {
+                    name,
+                    type_name: None,
+                }
+            };
+
+            self.next_token();
+            let kind = match self.cur_token.kind {
+                TokenKind::Keyword(KeywordToken::In) => ForEachKind::In,
+                TokenKind::Keyword(KeywordToken::Of) => ForEachKind::Of,
+                _ => {
+                    return Err(SnowFallError::new_compiler_error(
+                        "Expected 'in' or 'of' in for-each loop".to_string(),
+                        "SF0017".to_string(),
+                        self.lexer.line,
+                        self.lexer.column,
+                    ));
+                }
+            };
+            self.next_token();
+            let iterable = self.parse_expression(Precedence::Lowest)?;
+
+            self.expect_peek(TokenKind::Delimiter(DelimiterToken::RParen))?;
+            self.next_token();
+            let body = Box::new(self.parse_statement()?);
+
+            Ok(Statement {
+                kind: StatementKind::ForEach {
+                    binding,
+                    iterable,
+                    kind,
+                    body,
+                },
+                span: Span {
+                    start,
+                    end: self.cur_token.span.end,
+                },
+            })
+        } else {
+            // for 文
+            // 初期化
+            let init = if self.cur_token.kind != TokenKind::Delimiter(DelimiterToken::Semicolon) {
+                // ここではセミコロンを消費しないバージョンの文解析が必要
+                if self.is_variable_declaration() {
+                    Some(Box::new(self.parse_variable_declaration_for_for()?))
+                } else {
+                    Some(Box::new(self.parse_expression_statement_for_for()?))
+                }
+            } else {
+                None
+            };
+            self.expect_peek(TokenKind::Delimiter(DelimiterToken::Semicolon))?;
+            self.next_token();
+
+            // 条件
+            let condition =
+                if self.cur_token.kind != TokenKind::Delimiter(DelimiterToken::Semicolon) {
+                    Some(self.parse_expression(Precedence::Lowest)?)
+                } else {
+                    None
+                };
+            self.expect_peek(TokenKind::Delimiter(DelimiterToken::Semicolon))?;
+            self.next_token();
+
+            // 更新
+            let update = if self.cur_token.kind != TokenKind::Delimiter(DelimiterToken::RParen) {
+                Some(Box::new(self.parse_expression_statement_for_for()?))
+            } else {
+                None
+            };
+            self.expect_peek(TokenKind::Delimiter(DelimiterToken::RParen))?;
+            self.next_token();
+            let body = Box::new(self.parse_statement()?);
+            Ok(Statement {
+                kind: StatementKind::For {
+                    init,
+                    condition,
+                    update,
+                    body,
+                },
+                span: Span {
+                    start,
+                    end: self.cur_token.span.end,
+                },
+            })
+        }
+    }
+
+    /// 推測的に先を見て、現在の `for` 構造が正しいかどうかを判断します。
+    /// for-each ループ (`in` または `of`) または C スタイルの for ループ (`;`) です。
+    /// これは `parse_for_statement` のヘルパーです。 `(` の直後にあることを前提としています。
+    fn is_for_each_loop(&self) -> bool {
+        let mut temp_lexer = self.lexer.clone();
+        let mut temp_cur = self.cur_token.clone();
+        let mut temp_peek = self.peek_token.clone();
+        let mut paren_level = 1;
+
+        loop {
+            match &temp_cur.kind {
+                // 最上位に「in」または「of」が見つかった場合、それは for-each です。
+                TokenKind::Keyword(KeywordToken::In) | TokenKind::Keyword(KeywordToken::Of)
+                    if paren_level == 1 =>
+                {
+                    return true;
+                }
+                // セミコロンが見つかった場合、それは C スタイルの for ループです。
+                TokenKind::Delimiter(DelimiterToken::Semicolon) => {
+                    return false;
+                }
+                TokenKind::Delimiter(DelimiterToken::LParen) => paren_level += 1,
+                TokenKind::Delimiter(DelimiterToken::RParen) => {
+                    paren_level -= 1;
+                    // for ヘッダー `(...)` の終わりに達しました。
+                    // 有効な foreach には「in」または「of」が必要なので、ここまで来ると、それは 1 つではありません。
+                    if paren_level == 0 {
+                        return false;
+                    }
+                }
+                TokenKind::Eof => return false, // 予期せず入力の終わりに達しました
+                _ => {}
+            }
+
+            // Advance tokens
+            temp_cur = temp_peek;
+            temp_peek = temp_lexer.next_token().unwrap_or(Token::eof(0));
+        }
+    }
+
+    /// for文のinit/update用にセミコロンを消費しない`parse_expression_statement`
+    fn parse_expression_statement_for_for(&mut self) -> ParseResult<Statement> {
+        let start = self.cur_token.span.start;
+        let expr = self.parse_expression(Precedence::Lowest)?;
+        Ok(Statement {
+            kind: StatementKind::Expression(expr),
+            span: Span {
+                start,
+                end: self.cur_token.span.end,
+            },
+        })
+    }
+
+    /// for文のinit用にセミコロンを消費しない`parse_variable_declaration`
+    fn parse_variable_declaration_for_for(&mut self) -> ParseResult<Statement> {
+        let start = self.cur_token.span.start;
+        let type_name = if let TokenKind::Identifier(ref s) = self.cur_token.kind {
+            s.clone()
+        } else {
+            return Err(SnowFallError::new_compiler_error(
+                "Expected type name".into(),
+                "SF0012".to_string(),
+                self.lexer.line,
+                self.lexer.column,
+            ));
+        };
+
+        let mut declarators = Vec::new();
+        loop {
+            self.expect_peek(TokenKind::Identifier("".to_string()))?;
+            let var_name = if let TokenKind::Identifier(ref s) = self.cur_token.kind {
+                s.clone()
+            } else {
+                unreachable!()
+            };
+
+            let mut value = None;
+            if self.peek_token_is(&TokenKind::Operator(OperatorToken::Assign)) {
+                self.next_token();
+                self.next_token();
+                value = Some(self.parse_expression(Precedence::Lowest)?);
+            }
+
+            declarators.push(VariableDeclarator {
+                name: var_name,
+                value,
+            });
+
+            if self.peek_token_is(&TokenKind::Delimiter(DelimiterToken::Comma)) {
+                self.next_token();
+            } else {
+                break;
+            }
+        }
+
+        Ok(Statement {
+            kind: StatementKind::VariableDeclaration {
+                type_name,
+                declarators,
+            },
+            span: Span {
+                start,
+                end: self.cur_token.span.end,
+            },
+        })
+    }
+
     /// while 文を解析する
     fn parse_while_statement(&mut self) -> ParseResult<Statement> {
         let start = self.cur_token.span.start;
@@ -628,6 +843,18 @@ impl<'a> Parser<'a> {
                 span: self.cur_token.span,
             },
             TokenKind::Literal(lit) => self.parse_literal(lit)?,
+            TokenKind::Keyword(KeywordToken::True) => Expression {
+                kind: ExpressionKind::Boolean(true),
+                span: self.cur_token.span,
+            },
+            TokenKind::Keyword(KeywordToken::False) => Expression {
+                kind: ExpressionKind::Boolean(false),
+                span: self.cur_token.span,
+            },
+            TokenKind::Keyword(KeywordToken::Null) => Expression {
+                kind: ExpressionKind::NullLiteral,
+                span: self.cur_token.span,
+            },
             TokenKind::Operator(
                 OperatorToken::Plus
                 | OperatorToken::Minus

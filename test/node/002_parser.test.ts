@@ -75,7 +75,7 @@ test("Parser Test", async (t) => {
 		deepStrictEqual(stmt3.kind.value?.kind, { type: "StringLiteral", value: "hello" });
 	});
 
-	await t.test("should parse Prefix expressions", { skip: "Boolean実装後に検証" }, () => {
+	await t.test("should parse Prefix expressions", () => {
 		const tests = [
 			{ input: "!true;", operator: "Bang", right: { type: "Boolean", value: true } },
 			{ input: "-15;", operator: "Minus", right: { type: "IntLiteral", value: 15 } },
@@ -94,7 +94,7 @@ test("Parser Test", async (t) => {
 		}
 	});
 
-	await t.test("should parse Infix expressions", { skip: "Boolean実装後に検証" }, () => {
+	await t.test("should parse Infix expressions", () => {
 		const tests = [
 			{ input: "5 + 5;", left: 5, operator: "Add", right: 5 },
 			{ input: "5 - 5;", left: 5, operator: "Subtract", right: 5 },
@@ -122,7 +122,7 @@ test("Parser Test", async (t) => {
 		}
 	});
 
-	await t.test("should respect operator precedence", { skip: "Boolean実装後に検証" }, () => {
+	await t.test("should respect operator precedence", () => {
 		const tests = [
 			{ input: "-a * b;", expected: "((-a) * b)" },
 			{ input: "!-a;", expected: "(!(-a))" },
