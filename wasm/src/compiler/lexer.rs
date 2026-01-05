@@ -1,6 +1,6 @@
 use crate::{
     common::{
-        DelimiterToken, KeywordToken, LiteralToken, OperatorToken, Token, TokenKind,
+        DelimiterToken, ErrorCode, KeywordToken, LiteralToken, OperatorToken, Token, TokenKind,
         error::SnowFallError,
     },
     create_token,
@@ -377,8 +377,8 @@ impl<'a> Lexer<'a> {
                 let error_tok = self.ch;
                 self.read_char();
                 return Err(SnowFallError::new_compiler_error(
-                    format!("Unexpected character: {}", error_tok as char),
-                    "SF0001".to_string(),
+                    Some(format!("Unexpected character: {}", error_tok as char)),
+                    ErrorCode::UnexpectedCharacter,
                     self.line,
                     self.column,
                 ));
@@ -452,8 +452,8 @@ impl<'a> Lexer<'a> {
                     // 先頭 or '.' 直後は NG
                     if number_str.is_empty() || !prev_was_digit {
                         return Err(SnowFallError::new_compiler_error(
-                            "Invalid number format: misplaced underscore".to_string(),
-                            "SF0002".to_string(),
+                            Some("Invalid number format: misplaced underscore".to_string()),
+                            ErrorCode::InvalidNumberFormat,
                             self.line,
                             self.column,
                         ));
@@ -464,8 +464,8 @@ impl<'a> Lexer<'a> {
                     // '_' 直後は NG
                     if prev_was_underscore {
                         return Err(SnowFallError::new_compiler_error(
-                            "Invalid number format: misplaced underscore".to_string(),
-                            "SF0002".to_string(),
+                            Some("Invalid number format: misplaced underscore".to_string()),
+                            ErrorCode::InvalidNumberFormat,
                             self.line,
                             self.column,
                         ));
@@ -491,8 +491,8 @@ impl<'a> Lexer<'a> {
         // 末尾 '_' は NG
         if prev_was_underscore {
             return Err(SnowFallError::new_compiler_error(
-                "Invalid number format: misplaced underscore".to_string(),
-                "SF0002".to_string(),
+                Some("Invalid number format: misplaced underscore".to_string()),
+                ErrorCode::InvalidNumberFormat,
                 self.line,
                 self.column,
             ));
@@ -503,8 +503,8 @@ impl<'a> Lexer<'a> {
                 Some(v) => v,
                 None => {
                     return Err(SnowFallError::new_compiler_error(
-                        "Invalid float format".to_string(),
-                        "SF0002".to_string(),
+                        Some("Invalid float format".to_string()),
+                        ErrorCode::InvalidNumberFormat,
                         self.line,
                         self.column,
                     ));
@@ -512,8 +512,8 @@ impl<'a> Lexer<'a> {
             };
             if int_str.is_empty() && frac_str.is_empty() {
                 return Err(SnowFallError::new_compiler_error(
-                    "Invalid float format".to_string(),
-                    "SF0002".to_string(),
+                    Some("Invalid float format".to_string()),
+                    ErrorCode::InvalidNumberFormat,
                     self.line,
                     self.column,
                 ));
@@ -532,8 +532,8 @@ impl<'a> Lexer<'a> {
                     self.position + 1
                 )),
                 Err(_) => Err(SnowFallError::new_compiler_error(
-                    format!("Failed to parse float: {}", number_str),
-                    "SF0002".to_string(),
+                    Some(format!("Failed to parse float: {}", number_str)),
+                    ErrorCode::InvalidNumberFormat,
                     self.line,
                     self.column,
                 )),
@@ -546,8 +546,8 @@ impl<'a> Lexer<'a> {
                     self.position + 1
                 )),
                 Err(_) => Err(SnowFallError::new_compiler_error(
-                    format!("Failed to parse integer: {}", number_str),
-                    "SF0002".to_string(),
+                    Some(format!("Failed to parse integer: {}", number_str)),
+                    ErrorCode::InvalidNumberFormat,
                     self.line,
                     self.column,
                 )),
@@ -574,8 +574,8 @@ impl<'a> Lexer<'a> {
                     // 先頭 or '.' 直後は NG
                     if number_str.is_empty() || !prev_was_digit {
                         return Err(SnowFallError::new_compiler_error(
-                            "Invalid hex format: misplaced underscore".to_string(),
-                            "SF0002".to_string(),
+                            Some("Invalid hex format: misplaced underscore".to_string()),
+                            ErrorCode::InvalidNumberFormat,
                             self.line,
                             self.column,
                         ));
@@ -586,8 +586,8 @@ impl<'a> Lexer<'a> {
                     // '_' 直後は NG
                     if prev_was_underscore {
                         return Err(SnowFallError::new_compiler_error(
-                            "Invalid hex format: misplaced underscore".to_string(),
-                            "SF0002".to_string(),
+                            Some("Invalid hex format: misplaced underscore".to_string()),
+                            ErrorCode::InvalidNumberFormat,
                             self.line,
                             self.column,
                         ));
@@ -613,8 +613,8 @@ impl<'a> Lexer<'a> {
         // 末尾 '_' は NG
         if prev_was_underscore {
             return Err(SnowFallError::new_compiler_error(
-                "Invalid hex format: misplaced underscore".to_string(),
-                "SF0002".to_string(),
+                Some("Invalid hex format: misplaced underscore".to_string()),
+                ErrorCode::InvalidNumberFormat,
                 self.line,
                 self.column,
             ));
@@ -622,8 +622,11 @@ impl<'a> Lexer<'a> {
 
         if self.ch.is_ascii_alphabetic() {
             return Err(SnowFallError::new_compiler_error(
-                format!("Invalid character in hex literal: {}", self.ch as char),
-                "SF0002".to_string(),
+                Some(format!(
+                    "Invalid character in hex literal: {}",
+                    self.ch as char
+                )),
+                ErrorCode::InvalidNumberFormat,
                 self.line,
                 self.column,
             ));
@@ -636,8 +639,8 @@ impl<'a> Lexer<'a> {
                 Some(v) => v,
                 None => {
                     return Err(SnowFallError::new_compiler_error(
-                        "Invalid hex float format".to_string(),
-                        "SF0002".to_string(),
+                        Some("Invalid hex float format".to_string()),
+                        ErrorCode::InvalidNumberFormat,
                         self.line,
                         self.column,
                     ));
@@ -646,8 +649,8 @@ impl<'a> Lexer<'a> {
 
             if int_str.is_empty() {
                 return Err(SnowFallError::new_compiler_error(
-                    "Invalid hex float format".to_string(),
-                    "SF0002".to_string(),
+                    Some("Invalid hex float format".to_string()),
+                    ErrorCode::InvalidNumberFormat,
                     self.line,
                     self.column,
                 ));
@@ -657,8 +660,8 @@ impl<'a> Lexer<'a> {
                 Ok(v) => v as f64,
                 Err(_) => {
                     return Err(SnowFallError::new_compiler_error(
-                        format!("Failed to parse hex integer part: {}", int_str),
-                        "SF0002".to_string(),
+                        Some(format!("Failed to parse hex integer part: {}", int_str)),
+                        ErrorCode::InvalidNumberFormat,
                         self.line,
                         self.column,
                     ));
@@ -673,8 +676,8 @@ impl<'a> Lexer<'a> {
                     Some(d) => d as f64,
                     None => {
                         return Err(SnowFallError::new_compiler_error(
-                            format!("Invalid hex digit in fractional part: {}", c),
-                            "SF0002".to_string(),
+                            Some(format!("Invalid hex digit in fractional part: {}", c)),
+                            ErrorCode::InvalidNumberFormat,
                             self.line,
                             self.column,
                         ));
@@ -698,8 +701,8 @@ impl<'a> Lexer<'a> {
                 self.position + 1
             )),
             Err(_) => Err(SnowFallError::new_compiler_error(
-                format!("Failed to parse hex integer: {}", number_str),
-                "SF0002".to_string(),
+                Some(format!("Failed to parse hex integer: {}", number_str)),
+                ErrorCode::InvalidNumberFormat,
                 self.line,
                 self.column,
             )),
@@ -725,8 +728,8 @@ impl<'a> Lexer<'a> {
                     // 先頭 or '.' 直後は NG
                     if number_str.is_empty() || !prev_was_digit {
                         return Err(SnowFallError::new_compiler_error(
-                            "Invalid binary format: misplaced underscore".to_string(),
-                            "SF0002".to_string(),
+                            Some("Invalid binary format: misplaced underscore".to_string()),
+                            ErrorCode::InvalidNumberFormat,
                             self.line,
                             self.column,
                         ));
@@ -737,8 +740,8 @@ impl<'a> Lexer<'a> {
                     // '_' 直後は NG
                     if prev_was_underscore {
                         return Err(SnowFallError::new_compiler_error(
-                            "Invalid binary format: misplaced underscore".to_string(),
-                            "SF0002".to_string(),
+                            Some("Invalid binary format: misplaced underscore".to_string()),
+                            ErrorCode::InvalidNumberFormat,
                             self.line,
                             self.column,
                         ));
@@ -764,8 +767,8 @@ impl<'a> Lexer<'a> {
         // 末尾 '_' は NG
         if prev_was_underscore {
             return Err(SnowFallError::new_compiler_error(
-                "Invalid binary format: misplaced underscore".to_string(),
-                "SF0002".to_string(),
+                Some("Invalid binary format: misplaced underscore".to_string()),
+                ErrorCode::InvalidNumberFormat,
                 self.line,
                 self.column,
             ));
@@ -773,8 +776,11 @@ impl<'a> Lexer<'a> {
 
         if self.ch.is_ascii_alphanumeric() {
             return Err(SnowFallError::new_compiler_error(
-                format!("Invalid character in binary literal: {}", self.ch as char),
-                "SF0002".to_string(),
+                Some(format!(
+                    "Invalid character in binary literal: {}",
+                    self.ch as char
+                )),
+                ErrorCode::InvalidNumberFormat,
                 self.line,
                 self.column,
             ));
@@ -787,8 +793,8 @@ impl<'a> Lexer<'a> {
                 Some(v) => v,
                 None => {
                     return Err(SnowFallError::new_compiler_error(
-                        "Invalid binary float format".to_string(),
-                        "SF0002".to_string(),
+                        Some("Invalid binary float format".to_string()),
+                        ErrorCode::InvalidNumberFormat,
                         self.line,
                         self.column,
                     ));
@@ -797,8 +803,8 @@ impl<'a> Lexer<'a> {
 
             if int_str.is_empty() {
                 return Err(SnowFallError::new_compiler_error(
-                    "Invalid binary float format".to_string(),
-                    "SF0002".to_string(),
+                    Some("Invalid binary float format".to_string()),
+                    ErrorCode::InvalidNumberFormat,
                     self.line,
                     self.column,
                 ));
@@ -808,8 +814,8 @@ impl<'a> Lexer<'a> {
                 Ok(v) => v as f64,
                 Err(_) => {
                     return Err(SnowFallError::new_compiler_error(
-                        format!("Failed to parse binary integer part: {}", int_str),
-                        "SF0002".to_string(),
+                        Some(format!("Failed to parse binary integer part: {}", int_str)),
+                        ErrorCode::InvalidNumberFormat,
                         self.line,
                         self.column,
                     ));
@@ -825,8 +831,8 @@ impl<'a> Lexer<'a> {
                     '1' => 1.0,
                     _ => {
                         return Err(SnowFallError::new_compiler_error(
-                            format!("Invalid binary digit in fractional part: {}", c),
-                            "SF0002".to_string(),
+                            Some(format!("Invalid binary digit in fractional part: {}", c)),
+                            ErrorCode::InvalidNumberFormat,
                             self.line,
                             self.column,
                         ));
@@ -850,8 +856,8 @@ impl<'a> Lexer<'a> {
                 self.position + 1
             )),
             Err(_) => Err(SnowFallError::new_compiler_error(
-                format!("Failed to parse binary integer: {}", number_str),
-                "SF0002".to_string(),
+                Some(format!("Failed to parse binary integer: {}", number_str)),
+                ErrorCode::InvalidNumberFormat,
                 self.line,
                 self.column,
             )),
@@ -872,8 +878,8 @@ impl<'a> Lexer<'a> {
 
         if self.ch == 0 {
             return Err(SnowFallError::new_compiler_error(
-                "Unterminated string".to_string(),
-                "SF0003".to_string(),
+                None,
+                ErrorCode::UnterminatedString,
                 self.line,
                 self.column,
             ));

@@ -2,10 +2,12 @@
 //!
 pub mod constants;
 pub mod error;
+pub mod error_code;
 pub mod macros;
 pub mod span;
 pub mod token;
 
+pub use error_code::ErrorCode;
 pub use span::Span;
 pub use token::DelimiterToken;
 pub use token::KeywordToken;

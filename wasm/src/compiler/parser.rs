@@ -1,6 +1,6 @@
 use crate::common::error::SnowFallError;
 use crate::common::{
-    DelimiterToken, KeywordToken, LiteralToken, OperatorToken, Span, Token, TokenKind,
+    DelimiterToken, ErrorCode, KeywordToken, LiteralToken, OperatorToken, Span, Token, TokenKind,
 };
 use crate::compiler::Lexer;
 use crate::compiler::ast::{
@@ -121,11 +121,11 @@ impl<'a> Parser<'a> {
             Ok(())
         } else {
             Err(SnowFallError::new_compiler_error(
-                format!(
+                Some(format!(
                     "Expected next token to be {:?}, got {:?} instead",
                     expected, self.peek_token.kind
-                ),
-                "SF0010".to_string(),
+                )),
+                ErrorCode::UnexpectedToken,
                 self.lexer.line,
                 self.lexer.column,
             ))
@@ -296,8 +296,8 @@ impl<'a> Parser<'a> {
             s.clone()
         } else {
             return Err(SnowFallError::new_compiler_error(
-                "Expected type name".into(),
-                "SF0012".to_string(),
+                None,
+                ErrorCode::ExpectedTypeName,
                 self.lexer.line,
                 self.lexer.column,
             ));
@@ -360,8 +360,8 @@ impl<'a> Parser<'a> {
             Some(s.clone())
         } else {
             return Err(SnowFallError::new_compiler_error(
-                "Expected return type".into(),
-                "SF0013".to_string(),
+                None,
+                ErrorCode::ExpectedReturnType,
                 self.lexer.line,
                 self.lexer.column,
             ));
@@ -445,8 +445,8 @@ impl<'a> Parser<'a> {
                 s.clone()
             } else {
                 return Err(SnowFallError::new_compiler_error(
-                    "Expected parameter type".into(),
-                    "SF0014".to_string(),
+                    None,
+                    ErrorCode::ExpectedParameterType,
                     self.lexer.line,
                     self.lexer.column,
                 ));
@@ -553,8 +553,8 @@ impl<'a> Parser<'a> {
                     s.clone()
                 } else {
                     return Err(SnowFallError::new_compiler_error(
-                        "Expected identifier in for-each loop".to_string(),
-                        "SF0016".to_string(),
+                        None,
+                        ErrorCode::ExpectedIdentifierInForEach,
                         self.lexer.line,
                         self.lexer.column,
                     ));
@@ -571,8 +571,8 @@ impl<'a> Parser<'a> {
                 TokenKind::Keyword(KeywordToken::Of) => ForEachKind::Of,
                 _ => {
                     return Err(SnowFallError::new_compiler_error(
-                        "Expected 'in' or 'of' in for-each loop".to_string(),
-                        "SF0017".to_string(),
+                        None,
+                        ErrorCode::ExpectedInOrOfInForEach,
                         self.lexer.line,
                         self.lexer.column,
                     ));
@@ -707,8 +707,8 @@ impl<'a> Parser<'a> {
             s.clone()
         } else {
             return Err(SnowFallError::new_compiler_error(
-                "Expected type name".into(),
-                "SF0012".to_string(),
+                None,
+                ErrorCode::ExpectedTypeName,
                 self.lexer.line,
                 self.lexer.column,
             ));
@@ -808,11 +808,11 @@ impl<'a> Parser<'a> {
                 }
                 _ => {
                     return Err(SnowFallError::new_compiler_error(
-                        format!(
+                        Some(format!(
                             "Expected 'function' or 'sub' for class member, got {:?}",
                             self.cur_token.kind
-                        ),
-                        "SF0011".to_string(),
+                        )),
+                        ErrorCode::ExpectedMemberForClass,
                         self.lexer.line,
                         self.lexer.column,
                     ));
@@ -866,8 +866,11 @@ impl<'a> Parser<'a> {
             TokenKind::Delimiter(DelimiterToken::LBrace) => self.parse_object()?, // またはblock
             _ => {
                 return Err(SnowFallError::new_compiler_error(
-                    format!("Unexpected token for expression: {:?}", self.cur_token),
-                    "SF0015".to_string(),
+                    Some(format!(
+                        "Unexpected token for expression: {:?}",
+                        self.cur_token
+                    )),
+                    ErrorCode::UnexpectedTokenForExpression,
                     self.lexer.line,
                     self.lexer.column,
                 ));

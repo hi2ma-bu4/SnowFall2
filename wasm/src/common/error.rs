@@ -1,6 +1,8 @@
 use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
 
+use crate::common::ErrorCode;
+
 /// エラーに関連する追加情報（例: 期待された型、見つかった型など）
 pub type SnowFallErrorContext = AHashMap<String, String>;
 
@@ -46,11 +48,16 @@ impl SnowFallError {
     }
 
     /// `CompilationError` 型の `SnowFallError` を生成するためのファクトリ関数
-    pub fn new_compiler_error(message: String, code: String, line: u32, column: u32) -> Self {
+    pub fn new_compiler_error(
+        message: Option<String>,
+        code: ErrorCode,
+        line: u32,
+        column: u32,
+    ) -> Self {
         Self {
             r#type: "CompilationError".to_string(),
-            message,
-            code,
+            message: message.unwrap_or_else(|| code.get_default_message().to_string()),
+            code: code.to_str().to_string(),
             line,
             column,
             trace: Vec::new(),
