@@ -135,6 +135,21 @@ export function main_init() {
 }
 
 /**
+ * ソースコードを受け取り、正規化したASTを返す
+ * @param {string} source
+ * @returns {any}
+ */
+export function normalize(source) {
+    const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.normalize(ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
  * ソースコードを受け取り、解析したASTを返す
  * @param {string} source
  * @returns {any}

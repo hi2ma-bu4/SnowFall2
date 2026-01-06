@@ -96,6 +96,24 @@ export class SnowFall {
 		return result;
 	}
 
+	/**
+	 * デバッグ用のParser(normalize済)関数
+	 * @param input ソースコードの文字列
+	 * @returns トークンの配列
+	 * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください
+	 */
+	public dev_normalize(input: string): ParserResult {
+		const wasm = this.ensureInitialized();
+		const result = wasm.normalize(input) as ParserResult;
+		if (result.errors) {
+			return {
+				...result,
+				errors: result.errors.map((err: ISnowFallError) => new SnowFallError(err)),
+			};
+		}
+		return result;
+	}
+
 	/* ================================================== */
 	/* 共通利用 */
 	/* ================================================== */

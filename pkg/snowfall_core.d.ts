@@ -22,6 +22,11 @@ export function free_memory(ptr: number, size: number): void;
 export function main_init(): void;
 
 /**
+ * ソースコードを受け取り、正規化したASTを返す
+ * @deprecated 本番環境での使用は非推奨
+ */export function normalize(source: string): any;
+
+/**
  * ソースコードを受け取り、解析したASTを返す
  * @deprecated 本番環境での使用は非推奨
  */export function parser(source: string): any;
@@ -38,6 +43,7 @@ export interface InitOutput {
   readonly version: () => [number, number];
   readonly lexer: (a: number, b: number) => [number, number, number];
   readonly parser: (a: number, b: number) => [number, number, number];
+  readonly normalize: (a: number, b: number) => [number, number, number];
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;

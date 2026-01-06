@@ -4,6 +4,7 @@ declare function allocate_memory(size: number): number;
 declare function free_memory(ptr: number, size: number): void;
 declare function lexer(source: string): any;
 declare function main_init(): void;
+declare function normalize(source: string): any;
 declare function parser(source: string): any;
 declare function version(): string;
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -22,6 +23,11 @@ export interface InitOutput {
 		number
 	];
 	readonly parser: (a: number, b: number) => [
+		number,
+		number,
+		number
+	];
+	readonly normalize: (a: number, b: number) => [
 		number,
 		number,
 		number
@@ -324,6 +330,13 @@ export declare class SnowFall {
 	 */
 	dev_parser(input: string): ParserResult;
 	/**
+	 * デバッグ用のParser(normalize済)関数
+	 * @param input ソースコードの文字列
+	 * @returns トークンの配列
+	 * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください
+	 */
+	dev_normalize(input: string): ParserResult;
+	/**
 	 * バージョンチェック
 	 * @throws {Error}
 	 */
@@ -331,7 +344,7 @@ export declare class SnowFall {
 }
 
 declare namespace wasm {
-	export { InitInput, InitOutput, SyncInitInput, __wbg_init as default, allocate_memory, free_memory, initSync, lexer, main_init, parser, version };
+	export { InitInput, InitOutput, SyncInitInput, __wbg_init as default, allocate_memory, free_memory, initSync, lexer, main_init, normalize, parser, version };
 }
 
 export {};

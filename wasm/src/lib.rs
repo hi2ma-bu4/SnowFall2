@@ -12,7 +12,7 @@ pub mod compiler;
 use crate::common::error::SnowFallError;
 use crate::common::{Token, TokenKind, constants};
 use crate::compiler::ast::ProgramAst;
-use crate::compiler::{Lexer, Parser};
+use crate::compiler::{Lexer, Parser, normalizer};
 
 /// ライブラリの初期化時に一度だけ呼び出されるべき関数
 #[wasm_bindgen(start)]
@@ -89,6 +89,33 @@ pub fn parser(source: &str) -> Result<JsValue, JsValue> {
             ast: Some(program),
             errors: None,
         },
+        Err(errors) => ParserResult {
+            ast: None,
+            errors: Some(errors),
+        },
+    };
+
+    serde_wasm_bindgen::to_value(&compile_result)
+        .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
+}
+
+/// ソースコードを受け取り、正規化したASTを返す
+#[wasm_bindgen]
+#[allow(deprecated, reason = "Dev関数では許容")]
+#[deprecated(since = "1.0.0", note = "本番環境での使用は非推奨")]
+pub fn normalize(source: &str) -> Result<JsValue, JsValue> {
+    let lexer = Lexer::new(source);
+    let mut parser = Parser::new(lexer);
+    let result = parser.parse_program();
+
+    let compile_result = match result {
+        Ok(program) => {
+            let normalized_program = normalizer::normalize(program);
+            ParserResult {
+                ast: Some(normalized_program),
+                errors: None,
+            }
+        }
         Err(errors) => ParserResult {
             ast: None,
             errors: Some(errors),

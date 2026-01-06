@@ -1,5 +1,5 @@
 /*!
- * SnowFall2 v0.1.1
+ * SnowFall2 v0.2.1
  * Copyright 2026 hi2ma-bu4
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -19,6 +19,7 @@ __export(snowfall_core_exports, {
   initSync: () => initSync,
   lexer: () => lexer,
   main_init: () => main_init,
+  normalize: () => normalize,
   parser: () => parser,
   version: () => version
 });
@@ -119,6 +120,15 @@ function lexer(source) {
 }
 function main_init() {
   wasm.main_init();
+}
+function normalize(source) {
+  const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.normalize(ptr0, len0);
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1]);
+  }
+  return takeFromExternrefTable0(ret[0]);
 }
 function parser(source) {
   const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -375,7 +385,7 @@ function compareVersion(tsV, rustV) {
 }
 
 // src/version.ts
-var VERSION = "v0.1.1";
+var VERSION = "v0.2.1";
 
 // src/snowfall.ts
 var SnowFall = class {
@@ -444,6 +454,23 @@ var SnowFall = class {
   dev_parser(input) {
     const wasm2 = this.ensureInitialized();
     const result = wasm2.parser(input);
+    if (result.errors) {
+      return {
+        ...result,
+        errors: result.errors.map((err) => new SnowFallError(err))
+      };
+    }
+    return result;
+  }
+  /**
+   * デバッグ用のParser(normalize済)関数
+   * @param input ソースコードの文字列
+   * @returns トークンの配列
+   * @deprecated 開発・デバッグ用の関数です。本番環境では使用しないでください
+   */
+  dev_normalize(input) {
+    const wasm2 = this.ensureInitialized();
+    const result = wasm2.normalize(input);
     if (result.errors) {
       return {
         ...result,
