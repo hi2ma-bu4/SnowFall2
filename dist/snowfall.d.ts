@@ -365,11 +365,17 @@ export declare class SnowFall {
 	 */
 	compile(input: string, debug: boolean): CompileStrResult;
 	/**
-	 * コンパイル済みのバイナリデータを実行する
-	 * @param binary コンパイル済みのバイナリデータ
-	 * @returns 実行結果
+	 * コンパイル済みバイナリを実行する
+	 * @param binary コンパイルされたUint8Array
+	 * @returns 実行結果 (プリミティブ値またはオブジェクト)
 	 */
-	execute(binary: Uint8Array): any;
+	execute_bin(binary: Uint8Array): unknown;
+	/**
+	 * コンパイル済み文字列を実行する
+	 * @param binary コンパイルされたUint8Array
+	 * @returns 実行結果 (プリミティブ値またはオブジェクト)
+	 */
+	execute(input: string): unknown;
 	/**
 	 * デバッグ用のLexer関数
 	 * @param input ソースコードの文字列

@@ -1,5 +1,5 @@
 /*!
- * SnowFall2 v0.4.1
+ * SnowFall2 v0.5.1
  * Copyright 2026 hi2ma-bu4
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -428,6 +428,14 @@ function strFromU8Latin1(dat) {
   }
   return out;
 }
+function strToU8Latin1(str) {
+  const len = str.length;
+  const out = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    out[i] = str.charCodeAt(i);
+  }
+  return out;
+}
 
 // src/libs/Logger.ts
 var Logger = class {
@@ -584,6 +592,17 @@ function bufferToString_slow(buffer) {
     string += fromCharCode(buffer[i]);
   }
   return string;
+}
+function stringToArray(string) {
+  if (!string) {
+    return [];
+  }
+  const array = [];
+  const len = string ? string.length : 0;
+  for (let i = 0; i < len; i++) {
+    array[i] = string.charCodeAt(i);
+  }
+  return array;
 }
 function createWindow() {
   let i = WINDOW_MAX >> 7;
@@ -825,9 +844,155 @@ var Compressor = class {
   }
 };
 
+// src/libs/lzbase62/src/decompressor.ts
+var Decompressor = class {
+  _result = null;
+  _onDataCallback;
+  _onEndCallback;
+  /**
+   * @param {DecompressorOptions} [options] - Decompression options.
+   */
+  constructor(options) {
+    this._init(options);
+  }
+  /**
+   * Initializes or re-initializes the decompressor's state.
+   * @private
+   * @param {DecompressorOptions} [options] - Decompression options.
+   */
+  _init(options) {
+    options = options || {};
+    this._result = null;
+    this._onDataCallback = options.onData;
+    this._onEndCallback = options.onEnd;
+  }
+  /**
+   * Creates a reverse lookup table from the base62 character set.
+   * @private
+   * @returns {{ [char: string]: number }} The reverse lookup table.
+   */
+  _createTable() {
+    const table = {};
+    for (let i = 0; i < TABLE_LENGTH; i++) {
+      table[BASE62TABLE.charAt(i)] = i;
+    }
+    return table;
+  }
+  /**
+   * Handles a chunk of decompressed data.
+   * @private
+   * @param {boolean} [ended=false] - `true` if this is the final chunk.
+   */
+  _onData(ended = false) {
+    if (!this._onDataCallback || !this._result) {
+      return;
+    }
+    let chunk;
+    if (ended) {
+      chunk = this._result;
+      this._result = [];
+    } else {
+      const len = DECOMPRESS_CHUNK_SIZE - WINDOW_MAX;
+      chunk = this._result.slice(WINDOW_MAX, WINDOW_MAX + len);
+      this._result = this._result.slice(0, WINDOW_MAX).concat(this._result.slice(WINDOW_MAX + len));
+    }
+    if (chunk.length > 0) {
+      this._onDataCallback(bufferToString_fast(chunk));
+    }
+  }
+  /**
+   * Finalizes the decompression process.
+   * @private
+   */
+  _onEnd() {
+    if (this._onEndCallback) {
+      this._onEndCallback();
+    }
+  }
+  /**
+   * Decompresses a base62 encoded string.
+   * @param {string | null} data - The compressed data string.
+   * @returns {string} The original, decompressed string.
+   */
+  decompress(data) {
+    if (data == null || data.length === 0) {
+      return "";
+    }
+    this._result = stringToArray(createWindow());
+    let result = "";
+    const table = this._createTable();
+    let out = false;
+    let index = null;
+    const len = data.length;
+    let offset = 0;
+    let i, c, c2, c3;
+    let code, pos, length, sub, subLen, expandLen;
+    for (; offset < len; offset++) {
+      c = table[data.charAt(offset)];
+      if (c === void 0) {
+        continue;
+      }
+      if (c < DECODE_MAX) {
+        if (!out) {
+          code = index * UNICODE_CHAR_MAX + c;
+        } else {
+          c3 = table[data.charAt(++offset)];
+          code = c3 * UNICODE_CHAR_MAX + c + UNICODE_BUFFER_MAX * index;
+        }
+        this._result[this._result.length] = code;
+      } else if (c < LATIN_DECODE_MAX) {
+        index = c - DECODE_MAX;
+        out = false;
+      } else if (c === CHAR_START) {
+        c2 = table[data.charAt(++offset)];
+        index = c2 - 5;
+        out = true;
+      } else if (c < COMPRESS_INDEX) {
+        c2 = table[data.charAt(++offset)];
+        if (c < COMPRESS_FIXED_START) {
+          pos = (c - COMPRESS_START) * BUFFER_MAX + c2;
+          length = table[data.charAt(++offset)];
+        } else {
+          pos = (c - COMPRESS_FIXED_START) * BUFFER_MAX + c2;
+          length = 2;
+        }
+        sub = this._result.slice(-pos);
+        if (sub.length > length) {
+          sub.length = length;
+        }
+        subLen = sub.length;
+        if (sub.length > 0) {
+          expandLen = 0;
+          while (expandLen < length) {
+            for (i = 0; i < subLen; i++) {
+              this._result[this._result.length] = sub[i];
+              if (++expandLen >= length) {
+                break;
+              }
+            }
+          }
+        }
+        index = null;
+      }
+      if (this._result.length >= DECOMPRESS_CHUNK_MAX) {
+        this._onData();
+      }
+    }
+    this._result = this._result.slice(WINDOW_MAX);
+    this._onData(true);
+    this._onEnd();
+    result = bufferToString_fast(this._result);
+    this._result = null;
+    return result;
+  }
+};
+
 // src/libs/lzbase62/src/index.ts
 function compress(data, options) {
   return new Compressor(options).compress(data);
+}
+function decompress(data, options) {
+  return new Decompressor(options).decompress(data);
 }
 
 // src/libs/version_check.ts
@@ -863,7 +1028,7 @@ function compareVersion(tsV, rustV) {
 }
 
 // src/version.ts
-var VERSION = "v0.4.1";
+var VERSION = "v0.5.1";
 
 // src/snowfall.ts
 var SnowFall = class {
@@ -959,19 +1124,25 @@ var SnowFall = class {
     return {};
   }
   /**
-   * コンパイル済みのバイナリデータを実行する
-   * @param binary コンパイル済みのバイナリデータ
-   * @returns 実行結果
+   * コンパイル済みバイナリを実行する
+   * @param binary コンパイルされたUint8Array
+   * @returns 実行結果 (プリミティブ値またはオブジェクト)
    */
-  execute(binary) {
+  execute_bin(binary) {
     const wasm2 = this.ensureInitialized();
     try {
-      const result = wasm2.execute(binary);
-      return { value: result };
+      return wasm2.execute(binary);
     } catch (e) {
-      console.error(e);
-      return { error: e };
+      throw new SnowFallError(e);
     }
+  }
+  /**
+   * コンパイル済み文字列を実行する
+   * @param binary コンパイルされたUint8Array
+   * @returns 実行結果 (プリミティブ値またはオブジェクト)
+   */
+  execute(input) {
+    return this.execute_bin(strToU8Latin1(decompress(input)));
   }
   /* ================================================== */
   /* デバッグ用機能 */

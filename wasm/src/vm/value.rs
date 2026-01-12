@@ -1,5 +1,6 @@
 use crate::vm::memory::GcRef;
 use std::fmt;
+use wasm_bindgen::JsValue;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Value {
@@ -30,6 +31,21 @@ impl Value {
             Value::Int(i) => *i != 0,
             Value::Float(f) => *f != 0.0,
             Value::Obj(_) => true,
+        }
+    }
+
+    /// JSValueへの変換 (実行結果をJSに返すため)
+    pub fn to_js_value(&self) -> JsValue {
+        match self {
+            Value::Null => JsValue::NULL,
+            Value::Bool(b) => JsValue::from_bool(*b),
+            // JSのNumberは正確には53bitまでだが、安全のためBigIntにするか、
+            // 相互運用性を重視してNumberにするかは要件次第。ここでは安全にNumber(f64)とする
+            Value::Int(i) => JsValue::from_f64(*i as f64),
+            Value::Float(f) => JsValue::from_f64(*f),
+            // オブジェクトの場合は簡易的に文字列表現を返すか、undefinedとする
+            // 本格的な連携にはserdeシリアライズが必要
+            Value::Obj(_) => JsValue::from_str("<Object>"),
         }
     }
 }

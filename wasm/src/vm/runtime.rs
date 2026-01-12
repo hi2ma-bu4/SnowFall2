@@ -1,6 +1,6 @@
-use crate::common::constants::{BINARY_VERSION, MAGIC, MAX_CALL_STACK_DEPTH};
+use crate::common::constants::{BINARY_VERSION, INITIAL_STACK_SIZE, MAGIC, MAX_CALL_STACK_DEPTH};
 use crate::common::error::SnowFallError;
-use crate::common::opcode::{Constant, Opcode};
+use crate::common::opcode::Opcode;
 use crate::vm::frame::CallFrame;
 use crate::vm::memory::{
     ClassInfo, Closure, CompiledFunction, GcRef, Heap, Instance, ObjKind, UpvalueState,
@@ -49,41 +49,6 @@ impl<'a> Cursor<'a> {
             Vec::new()
         }
     }
-
-    /// LEB128 Unsigned Decoder
-    fn read_leb128(&mut self) -> u64 {
-        let mut result = 0;
-        let mut shift = 0;
-        loop {
-            let byte = self.read_u8();
-            result |= ((byte & 0x7F) as u64) << shift;
-            if (byte & 0x80) == 0 {
-                break;
-            }
-            shift += 7;
-        }
-        result
-    }
-
-    /// SLEB128 Signed Decoder
-    fn read_sleb128(&mut self) -> i64 {
-        let mut result = 0;
-        let mut shift = 0;
-        let mut byte;
-        loop {
-            byte = self.read_u8();
-            result |= ((byte & 0x7F) as i64) << shift;
-            shift += 7;
-            if (byte & 0x80) == 0 {
-                break;
-            }
-        }
-        // Sign extend
-        if (shift < 64) && ((byte & 0x40) != 0) {
-            result |= !0 << shift;
-        }
-        result
-    }
 }
 
 pub struct VM {
@@ -108,7 +73,7 @@ pub struct VM {
 impl VM {
     pub fn new() -> Self {
         Self {
-            stack: Vec::with_capacity(2048),
+            stack: Vec::with_capacity(INITIAL_STACK_SIZE),
             frames: Vec::with_capacity(64),
             heap: Heap::new(),
             globals: AHashMap::new(),
@@ -203,7 +168,7 @@ impl VM {
     }
 
     /// エントリーポイントから実行を開始
-    pub fn run(&mut self) -> Result<(), SnowFallError> {
+    pub fn run(&mut self) -> Result<Value, SnowFallError> {
         // トップレベルのスクリプト関数を作成してフレームに積む
         let script_func = Rc::new(CompiledFunction {
             name: "<script>".to_string(),
@@ -226,12 +191,13 @@ impl VM {
         self.execute_loop()
     }
 
-    fn execute_loop(&mut self) -> Result<(), SnowFallError> {
+    fn execute_loop(&mut self) -> Result<Value, SnowFallError> {
         // Rustのbounds checkを回避するためにunsafeを使いたいところだが、
         // 安全性重視でgetを使用し、unwrap_orで処理する
         loop {
             if self.frames.is_empty() {
-                break;
+                // フレームがなくなったら終了、スタックトップを返す
+                return Ok(self.stack.pop().unwrap_or(Value::Null));
             }
 
             // 現在のフレーム情報取得
@@ -304,7 +270,8 @@ impl VM {
                 Opcode::Add => {
                     let b = self.pop();
                     let a = self.pop();
-                    self.push(self.add(a, b)?);
+                    let result = self.add(a, b)?;
+                    self.push(result);
                 }
                 Opcode::Sub => {
                     let b = self.pop();
@@ -407,7 +374,7 @@ impl VM {
             }
         }
 
-        Ok(())
+        Ok(Value::Null)
     }
 
     // --- Helpers ---

@@ -201,12 +201,12 @@ pub fn execute(binary: &[u8]) -> Result<JsValue, JsValue> {
 
     // バイナリロード
     if let Err(e) = vm.load(binary) {
-        return Err(serde_wasm_bindgen::to_value(&e).unwrap());
+        return Err(serde_wasm_bindgen::to_value(&e).unwrap_or(JsValue::NULL));
     }
 
     // 実行
     match vm.run() {
-        Ok(_) => Ok(JsValue::UNDEFINED),
-        Err(e) => Err(serde_wasm_bindgen::to_value(&e).unwrap()),
+        Ok(value) => Ok(value.to_js_value()),
+        Err(e) => Err(serde_wasm_bindgen::to_value(&e).unwrap_or(JsValue::NULL)),
     }
 }

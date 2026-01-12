@@ -1,7 +1,7 @@
 import init, * as wasm from "../pkg/snowfall_core";
 import { SnowFallError } from "./common/SnowFallError";
 import type { CompileBinResult, CompileStrResult, ISnowFallError, ParserResult, Token } from "./common/types";
-import { strFromU8Latin1 } from "./libs/compress";
+import { strFromU8Latin1, strToU8Latin1 } from "./libs/compress";
 import { Logger } from "./libs/Logger";
 import * as lzbase62 from "./libs/lzbase62/src";
 import { compareVersion, parseSemVer } from "./libs/version_check";
@@ -120,6 +120,30 @@ export class SnowFall {
 			};
 		}
 		return {};
+	}
+
+	/**
+	 * コンパイル済みバイナリを実行する
+	 * @param binary コンパイルされたUint8Array
+	 * @returns 実行結果 (プリミティブ値またはオブジェクト)
+	 */
+	public execute_bin(binary: Uint8Array): unknown {
+		const wasm = this.ensureInitialized();
+		try {
+			return wasm.execute(binary);
+		} catch (e) {
+			// Wasmから投げられたエラーをSnowFallErrorとして再スロー
+			throw new SnowFallError(e as ISnowFallError);
+		}
+	}
+
+	/**
+	 * コンパイル済み文字列を実行する
+	 * @param binary コンパイルされたUint8Array
+	 * @returns 実行結果 (プリミティブ値またはオブジェクト)
+	 */
+	public execute(input: string): unknown {
+		return this.execute_bin(strToU8Latin1(lzbase62.decompress(input)));
 	}
 
 	/* ================================================== */

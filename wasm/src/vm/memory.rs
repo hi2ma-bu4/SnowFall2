@@ -1,4 +1,4 @@
-use crate::common::opcode::Constant;
+use crate::common::constants::GC_THRESHOLD;
 use crate::vm::value::Value;
 use ahash::AHashMap;
 use std::cell::RefCell;
@@ -83,7 +83,7 @@ impl Heap {
             objects: Vec::with_capacity(1024),
             free_slots: Vec::new(),
             bytes_allocated: 0,
-            next_gc_threshold: 1024 * 1024, // 1MB相当 (簡易的に1単位1バイト計算でも可)
+            next_gc_threshold: GC_THRESHOLD,
         }
     }
 
