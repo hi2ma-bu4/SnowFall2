@@ -16,6 +16,7 @@ __export(snowfall_core_exports, {
   WasmCompileResult: () => WasmCompileResult,
   compile: () => compile,
   default: () => snowfall_core_default,
+  execute: () => execute,
   free_memory: () => free_memory,
   free_memory_with_len: () => free_memory_with_len,
   initSync: () => initSync,
@@ -60,6 +61,12 @@ function handleError(f, args) {
     const idx = addToExternrefTable0(e);
     wasm.__wbindgen_exn_store(idx);
   }
+}
+function passArray8ToWasm0(arg, malloc) {
+  const ptr = malloc(arg.length * 1, 1) >>> 0;
+  getUint8ArrayMemory0().set(arg, ptr / 1);
+  WASM_VECTOR_LEN = arg.length;
+  return ptr;
 }
 function passStringToWasm0(arg, malloc, realloc) {
   if (realloc === void 0) {
@@ -170,6 +177,15 @@ function compile(source, debug) {
   const len0 = WASM_VECTOR_LEN;
   const ret = wasm.compile(ptr0, len0, debug);
   return WasmCompileResult.__wrap(ret);
+}
+function execute(binary) {
+  const ptr0 = passArray8ToWasm0(binary, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.execute(ptr0, len0);
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1]);
+  }
+  return takeFromExternrefTable0(ret[0]);
 }
 function free_memory(ptr, capacity) {
   wasm.free_memory(ptr, capacity);
@@ -941,6 +957,21 @@ var SnowFall = class {
       };
     }
     return {};
+  }
+  /**
+   * コンパイル済みのバイナリデータを実行する
+   * @param binary コンパイル済みのバイナリデータ
+   * @returns 実行結果
+   */
+  execute(binary) {
+    const wasm2 = this.ensureInitialized();
+    try {
+      const result = wasm2.execute(binary);
+      return { value: result };
+    } catch (e) {
+      console.error(e);
+      return { error: e };
+    }
   }
   /* ================================================== */
   /* デバッグ用機能 */

@@ -41,6 +41,13 @@ function handleError(f, args) {
     }
 }
 
+function passArray8ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 1, 1) >>> 0;
+    getUint8ArrayMemory0().set(arg, ptr / 1);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
+}
+
 function passStringToWasm0(arg, malloc, realloc) {
     if (realloc === undefined) {
         const buf = cachedTextEncoder.encode(arg);
@@ -171,6 +178,21 @@ export function compile(source, debug) {
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.compile(ptr0, len0, debug);
     return WasmCompileResult.__wrap(ret);
+}
+
+/**
+ * 実行
+ * @param {Uint8Array} binary
+ * @returns {any}
+ */
+export function execute(binary) {
+    const ptr0 = passArray8ToWasm0(binary, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.execute(ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
 }
 
 /**

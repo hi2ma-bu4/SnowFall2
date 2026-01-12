@@ -22,6 +22,11 @@ export class WasmCompileResult {
 export function compile(source: string, debug: boolean): WasmCompileResult;
 
 /**
+ * 実行
+ */
+export function execute(binary: Uint8Array): any;
+
+/**
  * Rust 側で確保されたヒープメモリを解放（解放専用）
  *
  * この関数はメモリ解放のみを目的としたAPIです。
@@ -82,6 +87,7 @@ export interface InitOutput {
   readonly wasmcompileresult_binary: (a: number) => [number, number];
   readonly wasmcompileresult_errors: (a: number) => any;
   readonly compile: (a: number, b: number, c: number) => number;
+  readonly execute: (a: number, b: number) => [number, number, number];
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
   readonly __wbindgen_exn_store: (a: number) => void;
   readonly __externref_table_alloc: () => number;

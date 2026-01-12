@@ -14,6 +14,7 @@ declare class WasmCompileResult {
 	readonly errors: any;
 }
 declare function compile(source: string, debug: boolean): WasmCompileResult;
+declare function execute(binary: Uint8Array): any;
 declare function free_memory(ptr: number, capacity: number): void;
 declare function free_memory_with_len(ptr: number, length: number, capacity: number): void;
 declare function lexer(source: string): any;
@@ -53,6 +54,11 @@ export interface InitOutput {
 	];
 	readonly wasmcompileresult_errors: (a: number) => any;
 	readonly compile: (a: number, b: number, c: number) => number;
+	readonly execute: (a: number, b: number) => [
+		number,
+		number,
+		number
+	];
 	readonly __wbindgen_free: (a: number, b: number, c: number) => void;
 	readonly __wbindgen_exn_store: (a: number) => void;
 	readonly __externref_table_alloc: () => number;
@@ -359,6 +365,12 @@ export declare class SnowFall {
 	 */
 	compile(input: string, debug: boolean): CompileStrResult;
 	/**
+	 * コンパイル済みのバイナリデータを実行する
+	 * @param binary コンパイル済みのバイナリデータ
+	 * @returns 実行結果
+	 */
+	execute(binary: Uint8Array): any;
+	/**
 	 * デバッグ用のLexer関数
 	 * @param input ソースコードの文字列
 	 * @returns トークンの配列
@@ -387,7 +399,7 @@ export declare class SnowFall {
 }
 
 declare namespace wasm {
-	export { InitInput, InitOutput, SyncInitInput, WasmCompileResult, __wbg_init as default, compile, free_memory, free_memory_with_len, initSync, lexer, main_init, normalize, parser, version };
+	export { InitInput, InitOutput, SyncInitInput, WasmCompileResult, __wbg_init as default, compile, execute, free_memory, free_memory_with_len, initSync, lexer, main_init, normalize, parser, version };
 }
 
 export {};

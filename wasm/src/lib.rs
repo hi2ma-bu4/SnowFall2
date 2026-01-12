@@ -7,6 +7,7 @@ extern crate console_error_panic_hook;
 
 pub mod common;
 pub mod compiler;
+pub mod vm;
 
 use crate::common::constants;
 use crate::common::error::SnowFallError;
@@ -15,6 +16,7 @@ use crate::compiler::ast::ProgramAst;
 use crate::compiler::serialize_ir::serialize_ir;
 use crate::compiler::{IrCompiler, normalizer};
 use crate::compiler::{Lexer, Parser};
+use crate::vm::VM;
 
 /// ライブラリの初期化時に一度だけ呼び出されるべき関数
 #[wasm_bindgen(start)]
@@ -189,5 +191,22 @@ pub fn compile(source: &str, debug: bool) -> WasmCompileResult {
     WasmCompileResult {
         binary: Some(bytes), // Vec<u8> -> Uint8Array への変換はwasm-bindgenが行う
         errors: JsValue::UNDEFINED,
+    }
+}
+
+/// 実行
+#[wasm_bindgen]
+pub fn execute(binary: &[u8]) -> Result<JsValue, JsValue> {
+    let mut vm = VM::new();
+
+    // バイナリロード
+    if let Err(e) = vm.load(binary) {
+        return Err(serde_wasm_bindgen::to_value(&e).unwrap());
+    }
+
+    // 実行
+    match vm.run() {
+        Ok(_) => Ok(JsValue::UNDEFINED),
+        Err(e) => Err(serde_wasm_bindgen::to_value(&e).unwrap()),
     }
 }
