@@ -1,15 +1,46 @@
 /* tslint:disable */
 /* eslint-disable */
 
-/**
- * Wasmモジュールのメモリを確保し、そのポインタを返す
- */
-export function allocate_memory(size: number): number;
+export class WasmCompileResult {
+  private constructor();
+  free(): void;
+  [Symbol.dispose](): void;
+  /**
+   * バイナリデータ (Uint8Array | undefined)
+   */
+  readonly binary: Uint8Array | undefined;
+  /**
+   * エラーリスト (ISnowFallError[] | undefined)
+   */
+  readonly errors: any;
+}
 
 /**
- * Wasmモジュール内の確保されたメモリを解放する
+ * ソースコードをコンパイルし、バイナリへのポインタとサイズを返す
+ * debug: true の場合、ソースマップ（Debug Section）を含めます
  */
-export function free_memory(ptr: number, size: number): void;
+export function compile(source: string, debug: boolean): WasmCompileResult;
+
+/**
+ * Rust 側で確保されたヒープメモリを解放（解放専用）
+ *
+ * この関数はメモリ解放のみを目的としたAPIです。
+ * 長さ情報を必要とせず、`capacity`分のメモリを解放します。
+ *
+ * この関数は`length`を0として扱うため、
+ * データの内容には一切アクセスしません。
+ */
+export function free_memory(ptr: number, capacity: number): void;
+
+/**
+ * Rust の`Vec::into_raw_parts`によって取得したポインタを解放
+ *
+ * この関数は、`Vec::into_raw_parts`で分解された
+ * `(ptr, length, capacity)`の完全な対となる解放関数です。
+ *
+ * 上記条件を満たさない場合、未定義動作(UB)になります。
+ */
+export function free_memory_with_len(ptr: number, length: number, capacity: number): void;
 
 /**
  * ソースコードを受け取り、トークンのリストを返す
@@ -31,6 +62,9 @@ export function main_init(): void;
  * @deprecated 本番環境での使用は非推奨
  */export function parser(source: string): any;
 
+/**
+ * バージョン情報
+ */
 export function version(): string;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -38,16 +72,22 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly main_init: () => void;
-  readonly allocate_memory: (a: number) => number;
+  readonly free_memory_with_len: (a: number, b: number, c: number) => void;
   readonly free_memory: (a: number, b: number) => void;
   readonly version: () => [number, number];
   readonly lexer: (a: number, b: number) => [number, number, number];
   readonly parser: (a: number, b: number) => [number, number, number];
   readonly normalize: (a: number, b: number) => [number, number, number];
+  readonly __wbg_wasmcompileresult_free: (a: number, b: number) => void;
+  readonly wasmcompileresult_binary: (a: number) => [number, number];
+  readonly wasmcompileresult_errors: (a: number) => any;
+  readonly compile: (a: number, b: number, c: number) => number;
+  readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+  readonly __wbindgen_exn_store: (a: number) => void;
+  readonly __externref_table_alloc: () => number;
+  readonly __wbindgen_externrefs: WebAssembly.Table;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
-  readonly __wbindgen_free: (a: number, b: number, c: number) => void;
-  readonly __wbindgen_externrefs: WebAssembly.Table;
   readonly __externref_table_dealloc: (a: number) => void;
   readonly __wbindgen_start: () => void;
 }

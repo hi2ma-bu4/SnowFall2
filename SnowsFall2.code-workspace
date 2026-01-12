@@ -10,8 +10,11 @@
 			"bindgen",
 			"codegen",
 			"hexdigit",
+			"repr",
 			"rustc",
 			"serde",
+			"SLEB",
+			"SNFL",
 			"thiserror"
 		]
 	}

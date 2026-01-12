@@ -297,3 +297,12 @@ export interface ParserResult {
 	ast?: ProgramAst;
 	errors?: ISnowFallError[];
 }
+
+/* ================================================== */
+/* Compile使用 */
+/* ================================================== */
+
+export interface CompileResult {
+	binary?: Uint8Array;
+	errors?: ISnowFallError[];
+}

@@ -1,9 +1,11 @@
 //! 共通利用モジュール
 //!
+pub mod constant_fn;
 pub mod constants;
 pub mod error;
 pub mod error_code;
 pub mod macros;
+pub mod opcode;
 pub mod span;
 pub mod token;
 

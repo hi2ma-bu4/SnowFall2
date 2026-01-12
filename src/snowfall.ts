@@ -1,12 +1,12 @@
 import init, * as wasm from "../pkg/snowfall_core";
 import { SnowFallError } from "./common/SnowFallError";
-import type { ISnowFallError, ParserResult, Token } from "./common/types";
+import type { CompileResult, ISnowFallError, ParserResult, Token } from "./common/types";
 import { Logger } from "./libs/Logger";
 import { compareVersion, parseSemVer } from "./libs/version_check";
 import { VERSION } from "./version";
 
 // `wasm`名前空間に`memory`が存在することをTypeScriptに伝えるための型拡張
-export type WasmModule = typeof wasm & { memory: WebAssembly.Memory };
+export type WasmModule = typeof wasm;
 
 export class SnowFall {
 	private _wasm: WasmModule | null = null;
@@ -62,6 +62,46 @@ export class SnowFall {
 	/* ================================================== */
 	/* 公開機能 */
 	/* ================================================== */
+
+	/**
+	 * sfソースコードをコンパイルする
+	 * @param input ソースコードの文字列
+	 * @param debug ソースマップを追加するか
+	 * @returns バイナリデータ
+	 */
+	public compile_bin(input: string, debug: boolean): CompileResult {
+		const wasm = this.ensureInitialized();
+		const result = wasm.compile(input, debug);
+		try {
+			// エラーのチェック
+			const errorsVal = result.errors;
+			if (errorsVal) {
+				const errors = errorsVal as ISnowFallError[];
+				// 配列で、かつ中身がある場合
+				if (Array.isArray(errors) && errors.length > 0) {
+					return {
+						errors: errors.map((err) => new SnowFallError(err)),
+					};
+				}
+			}
+
+			// バイナリの取得
+			const binary = result.binary;
+			if (binary) {
+				return { binary };
+			}
+
+			// ここに来ることは通常ない
+			return {};
+		} finally {
+			// Wasm側のオブジェクトを解放する
+			result.free();
+		}
+	}
+
+	// public compile(input: string, debug: boolean): string {
+	// 	return lzbase62.compress(this.compile_bin(input, debug));
+	// }
 
 	/* ================================================== */
 	/* デバッグ用機能 */

@@ -1,5 +1,5 @@
 /*!
- * SnowFall2 v0.2.1
+ * SnowFall2 v0.3.1
  * Copyright 2026 hi2ma-bu4
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -13,9 +13,11 @@ var __export = (target, all) => {
 // pkg/snowfall_core.js
 var snowfall_core_exports = {};
 __export(snowfall_core_exports, {
-  allocate_memory: () => allocate_memory,
+  WasmCompileResult: () => WasmCompileResult,
+  compile: () => compile,
   default: () => snowfall_core_default,
   free_memory: () => free_memory,
+  free_memory_with_len: () => free_memory_with_len,
   initSync: () => initSync,
   lexer: () => lexer,
   main_init: () => main_init,
@@ -24,6 +26,15 @@ __export(snowfall_core_exports, {
   version: () => version
 });
 var wasm;
+function addToExternrefTable0(obj) {
+  const idx = wasm.__externref_table_alloc();
+  wasm.__wbindgen_externrefs.set(idx, obj);
+  return idx;
+}
+function getArrayU8FromWasm0(ptr, len) {
+  ptr = ptr >>> 0;
+  return getUint8ArrayMemory0().subarray(ptr / 1, ptr / 1 + len);
+}
 var cachedDataViewMemory0 = null;
 function getDataViewMemory0() {
   if (cachedDataViewMemory0 === null || cachedDataViewMemory0.buffer.detached === true || cachedDataViewMemory0.buffer.detached === void 0 && cachedDataViewMemory0.buffer !== wasm.memory.buffer) {
@@ -41,6 +52,14 @@ function getUint8ArrayMemory0() {
     cachedUint8ArrayMemory0 = new Uint8Array(wasm.memory.buffer);
   }
   return cachedUint8ArrayMemory0;
+}
+function handleError(f, args) {
+  try {
+    return f.apply(this, args);
+  } catch (e) {
+    const idx = addToExternrefTable0(e);
+    wasm.__wbindgen_exn_store(idx);
+  }
 }
 function passStringToWasm0(arg, malloc, realloc) {
   if (realloc === void 0) {
@@ -102,12 +121,61 @@ if (!("encodeInto" in cachedTextEncoder)) {
   };
 }
 var WASM_VECTOR_LEN = 0;
-function allocate_memory(size) {
-  const ret = wasm.allocate_memory(size);
-  return ret >>> 0;
+var WasmCompileResultFinalization = typeof FinalizationRegistry === "undefined" ? { register: () => {
+}, unregister: () => {
+} } : new FinalizationRegistry((ptr) => wasm.__wbg_wasmcompileresult_free(ptr >>> 0, 1));
+var WasmCompileResult = class _WasmCompileResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(_WasmCompileResult.prototype);
+    obj.__wbg_ptr = ptr;
+    WasmCompileResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    WasmCompileResultFinalization.unregister(this);
+    return ptr;
+  }
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_wasmcompileresult_free(ptr, 0);
+  }
+  /**
+   * バイナリデータ (Uint8Array | undefined)
+   * @returns {Uint8Array | undefined}
+   */
+  get binary() {
+    const ret = wasm.wasmcompileresult_binary(this.__wbg_ptr);
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * エラーリスト (ISnowFallError[] | undefined)
+   * @returns {any}
+   */
+  get errors() {
+    const ret = wasm.wasmcompileresult_errors(this.__wbg_ptr);
+    return ret;
+  }
+};
+if (Symbol.dispose) WasmCompileResult.prototype[Symbol.dispose] = WasmCompileResult.prototype.free;
+function compile(source, debug) {
+  const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.compile(ptr0, len0, debug);
+  return WasmCompileResult.__wrap(ret);
 }
-function free_memory(ptr, size) {
-  wasm.free_memory(ptr, size);
+function free_memory(ptr, capacity) {
+  wasm.free_memory(ptr, capacity);
+}
+function free_memory_with_len(ptr, length, capacity) {
+  wasm.free_memory_with_len(ptr, length, capacity);
 }
 function lexer(source) {
   const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -184,13 +252,6 @@ function __wbg_get_imports() {
     const ret = Error(getStringFromWasm0(arg0, arg1));
     return ret;
   };
-  imports.wbg.__wbg_String_8f0eb39a4a4c2f66 = function(arg0, arg1) {
-    const ret = String(arg1);
-    const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN;
-    getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-    getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
-  };
   imports.wbg.__wbg___wbindgen_is_string_704ef9c8fc131030 = function(arg0) {
     const ret = typeof arg0 === "string";
     return ret;
@@ -208,6 +269,11 @@ function __wbg_get_imports() {
     } finally {
       wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
     }
+  };
+  imports.wbg.__wbg_getRandomValues_1c61fac11405ffdc = function() {
+    return handleError(function(arg0, arg1) {
+      globalThis.crypto.getRandomValues(getArrayU8FromWasm0(arg0, arg1));
+    }, arguments);
   };
   imports.wbg.__wbg_new_1ba21ce319a06297 = function() {
     const ret = new Object();
@@ -385,7 +451,7 @@ function compareVersion(tsV, rustV) {
 }
 
 // src/version.ts
-var VERSION = "v0.2.1";
+var VERSION = "v0.3.1";
 
 // src/snowfall.ts
 var SnowFall = class {
@@ -432,6 +498,37 @@ var SnowFall = class {
   /* ================================================== */
   /* 公開機能 */
   /* ================================================== */
+  /**
+   * sfソースコードをコンパイルする
+   * @param input ソースコードの文字列
+   * @param debug ソースマップを追加するか
+   * @returns バイナリデータ
+   */
+  compile_bin(input, debug) {
+    const wasm2 = this.ensureInitialized();
+    const result = wasm2.compile(input, debug);
+    try {
+      const errorsVal = result.errors;
+      if (errorsVal) {
+        const errors = errorsVal;
+        if (Array.isArray(errors) && errors.length > 0) {
+          return {
+            errors: errors.map((err) => new SnowFallError(err))
+          };
+        }
+      }
+      const binary = result.binary;
+      if (binary) {
+        return { binary };
+      }
+      return {};
+    } finally {
+      result.free();
+    }
+  }
+  // public compile(input: string, debug: boolean): string {
+  // 	return lzbase62.compress(this.compile_bin(input, debug));
+  // }
   /* ================================================== */
   /* デバッグ用機能 */
   /* ================================================== */

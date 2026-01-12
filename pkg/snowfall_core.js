@@ -1,5 +1,16 @@
 let wasm;
 
+function addToExternrefTable0(obj) {
+    const idx = wasm.__externref_table_alloc();
+    wasm.__wbindgen_externrefs.set(idx, obj);
+    return idx;
+}
+
+function getArrayU8FromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    return getUint8ArrayMemory0().subarray(ptr / 1, ptr / 1 + len);
+}
+
 let cachedDataViewMemory0 = null;
 function getDataViewMemory0() {
     if (cachedDataViewMemory0 === null || cachedDataViewMemory0.buffer.detached === true || (cachedDataViewMemory0.buffer.detached === undefined && cachedDataViewMemory0.buffer !== wasm.memory.buffer)) {
@@ -19,6 +30,15 @@ function getUint8ArrayMemory0() {
         cachedUint8ArrayMemory0 = new Uint8Array(wasm.memory.buffer);
     }
     return cachedUint8ArrayMemory0;
+}
+
+function handleError(f, args) {
+    try {
+        return f.apply(this, args);
+    } catch (e) {
+        const idx = addToExternrefTable0(e);
+        wasm.__wbindgen_exn_store(idx);
+    }
 }
 
 function passStringToWasm0(arg, malloc, realloc) {
@@ -93,23 +113,94 @@ if (!('encodeInto' in cachedTextEncoder)) {
 
 let WASM_VECTOR_LEN = 0;
 
+const WasmCompileResultFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_wasmcompileresult_free(ptr >>> 0, 1));
+
+export class WasmCompileResult {
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(WasmCompileResult.prototype);
+        obj.__wbg_ptr = ptr;
+        WasmCompileResultFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        WasmCompileResultFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_wasmcompileresult_free(ptr, 0);
+    }
+    /**
+     * バイナリデータ (Uint8Array | undefined)
+     * @returns {Uint8Array | undefined}
+     */
+    get binary() {
+        const ret = wasm.wasmcompileresult_binary(this.__wbg_ptr);
+        let v1;
+        if (ret[0] !== 0) {
+            v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+            wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        }
+        return v1;
+    }
+    /**
+     * エラーリスト (ISnowFallError[] | undefined)
+     * @returns {any}
+     */
+    get errors() {
+        const ret = wasm.wasmcompileresult_errors(this.__wbg_ptr);
+        return ret;
+    }
+}
+if (Symbol.dispose) WasmCompileResult.prototype[Symbol.dispose] = WasmCompileResult.prototype.free;
+
 /**
- * Wasmモジュールのメモリを確保し、そのポインタを返す
- * @param {number} size
- * @returns {number}
+ * ソースコードをコンパイルし、バイナリへのポインタとサイズを返す
+ * debug: true の場合、ソースマップ（Debug Section）を含めます
+ * @param {string} source
+ * @param {boolean} debug
+ * @returns {WasmCompileResult}
  */
-export function allocate_memory(size) {
-    const ret = wasm.allocate_memory(size);
-    return ret >>> 0;
+export function compile(source, debug) {
+    const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.compile(ptr0, len0, debug);
+    return WasmCompileResult.__wrap(ret);
 }
 
 /**
- * Wasmモジュール内の確保されたメモリを解放する
+ * Rust 側で確保されたヒープメモリを解放（解放専用）
+ *
+ * この関数はメモリ解放のみを目的としたAPIです。
+ * 長さ情報を必要とせず、`capacity`分のメモリを解放します。
+ *
+ * この関数は`length`を0として扱うため、
+ * データの内容には一切アクセスしません。
  * @param {number} ptr
- * @param {number} size
+ * @param {number} capacity
  */
-export function free_memory(ptr, size) {
-    wasm.free_memory(ptr, size);
+export function free_memory(ptr, capacity) {
+    wasm.free_memory(ptr, capacity);
+}
+
+/**
+ * Rust の`Vec::into_raw_parts`によって取得したポインタを解放
+ *
+ * この関数は、`Vec::into_raw_parts`で分解された
+ * `(ptr, length, capacity)`の完全な対となる解放関数です。
+ *
+ * 上記条件を満たさない場合、未定義動作(UB)になります。
+ * @param {number} ptr
+ * @param {number} length
+ * @param {number} capacity
+ */
+export function free_memory_with_len(ptr, length, capacity) {
+    wasm.free_memory_with_len(ptr, length, capacity);
 }
 
 /**
@@ -165,6 +256,7 @@ export function parser(source) {
 }
 
 /**
+ * バージョン情報
  * @returns {string}
  */
 export function version() {
@@ -219,13 +311,6 @@ function __wbg_get_imports() {
         const ret = Error(getStringFromWasm0(arg0, arg1));
         return ret;
     };
-    imports.wbg.__wbg_String_8f0eb39a4a4c2f66 = function(arg0, arg1) {
-        const ret = String(arg1);
-        const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len1 = WASM_VECTOR_LEN;
-        getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-        getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
-    };
     imports.wbg.__wbg___wbindgen_is_string_704ef9c8fc131030 = function(arg0) {
         const ret = typeof(arg0) === 'string';
         return ret;
@@ -244,6 +329,9 @@ function __wbg_get_imports() {
             wasm.__wbindgen_free(deferred0_0, deferred0_1, 1);
         }
     };
+    imports.wbg.__wbg_getRandomValues_1c61fac11405ffdc = function() { return handleError(function (arg0, arg1) {
+        globalThis.crypto.getRandomValues(getArrayU8FromWasm0(arg0, arg1));
+    }, arguments) };
     imports.wbg.__wbg_new_1ba21ce319a06297 = function() {
         const ret = new Object();
         return ret;
