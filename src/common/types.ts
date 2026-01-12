@@ -302,7 +302,12 @@ export interface ParserResult {
 /* Compile使用 */
 /* ================================================== */
 
-export interface CompileResult {
+export interface CompileBinResult {
 	binary?: Uint8Array;
+	errors?: ISnowFallError[];
+}
+
+export interface CompileStrResult {
+	data?: string;
 	errors?: ISnowFallError[];
 }

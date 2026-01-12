@@ -1,5 +1,5 @@
 /*!
- * SnowFall2 v0.3.1
+ * SnowFall2 v0.4.1
  * Copyright 2026 hi2ma-bu4
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -403,6 +403,16 @@ var SnowFallError = class extends Error {
   }
 };
 
+// src/libs/compress.ts
+var CHUNK = 16384;
+function strFromU8Latin1(dat) {
+  let out = "";
+  for (let i = 0; i < dat.length; i += CHUNK) {
+    out += String.fromCharCode(...dat.subarray(i, i + CHUNK));
+  }
+  return out;
+}
+
 // src/libs/Logger.ts
 var Logger = class {
   static isDebug = false;
@@ -417,6 +427,392 @@ var Logger = class {
     console.error(`[${this.prefix}]`, ...args);
   }
 };
+
+// src/libs/lzbase62/src/config.ts
+var HAS_TYPED = typeof Uint8Array !== "undefined" && typeof Uint16Array !== "undefined";
+var canCharCodeApply = false;
+try {
+  if (String.fromCharCode.apply(null, [97]) === "a") {
+    canCharCodeApply = true;
+  }
+} catch (e) {
+}
+var CAN_CHARCODE_APPLY = canCharCodeApply;
+var canCharCodeApplyTyped = false;
+if (HAS_TYPED) {
+  try {
+    if (String.fromCharCode.apply(null, new Uint8Array([97])) === "a") {
+      canCharCodeApplyTyped = true;
+    }
+  } catch (e) {
+  }
+}
+var CAN_CHARCODE_APPLY_TYPED = canCharCodeApplyTyped;
+var APPLY_BUFFER_SIZE = 65533;
+var APPLY_BUFFER_SIZE_OK = null;
+function setApplyBufferSizeOk(value) {
+  APPLY_BUFFER_SIZE_OK = value;
+}
+var stringLastIndexOfBug = false;
+if ("abc\u307B\u3052".lastIndexOf("\u307B\u3052", 1) !== -1) {
+  stringLastIndexOfBug = true;
+}
+var STRING_LASTINDEXOF_BUG = stringLastIndexOfBug;
+var BASE62TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+var TABLE_LENGTH = BASE62TABLE.length;
+var TABLE_DIFF = Math.max(TABLE_LENGTH, 62) - Math.min(TABLE_LENGTH, 62);
+var BUFFER_MAX = TABLE_LENGTH - 1;
+var WINDOW_MAX = 1024;
+var WINDOW_BUFFER_MAX = 304;
+var COMPRESS_CHUNK_SIZE = APPLY_BUFFER_SIZE;
+var COMPRESS_CHUNK_MAX = COMPRESS_CHUNK_SIZE - TABLE_LENGTH;
+var DECOMPRESS_CHUNK_SIZE = APPLY_BUFFER_SIZE;
+var DECOMPRESS_CHUNK_MAX = DECOMPRESS_CHUNK_SIZE + WINDOW_MAX * 2;
+var LATIN_CHAR_MAX = 11;
+var LATIN_BUFFER_MAX = LATIN_CHAR_MAX * (LATIN_CHAR_MAX + 1);
+var UNICODE_CHAR_MAX = 40;
+var UNICODE_BUFFER_MAX = UNICODE_CHAR_MAX * (UNICODE_CHAR_MAX + 1);
+var LATIN_INDEX = TABLE_LENGTH + 1;
+var LATIN_INDEX_START = TABLE_DIFF + 20;
+var UNICODE_INDEX = TABLE_LENGTH + 5;
+var DECODE_MAX = TABLE_LENGTH - TABLE_DIFF - 19;
+var LATIN_DECODE_MAX = UNICODE_CHAR_MAX + 7;
+var CHAR_START = LATIN_DECODE_MAX + 1;
+var COMPRESS_START = CHAR_START + 1;
+var COMPRESS_FIXED_START = COMPRESS_START + 5;
+var COMPRESS_INDEX = COMPRESS_FIXED_START + 5;
+
+// src/libs/lzbase62/src/util.ts
+var fromCharCode = String.fromCharCode;
+function createBuffer(bits, size) {
+  if (HAS_TYPED) {
+    switch (bits) {
+      case 8:
+        return new Uint8Array(size);
+      case 16:
+        return new Uint16Array(size);
+    }
+  }
+  return new Array(size);
+}
+function truncateBuffer(buffer, length) {
+  if (buffer.length === length) {
+    return buffer;
+  }
+  if (buffer.subarray) {
+    return buffer.subarray(0, length);
+  }
+  buffer.length = length;
+  return buffer;
+}
+function bufferToString_fast(buffer, length) {
+  if (length == null) {
+    length = buffer.length;
+  } else {
+    buffer = truncateBuffer(buffer, length);
+  }
+  if (CAN_CHARCODE_APPLY && CAN_CHARCODE_APPLY_TYPED) {
+    const len = buffer.length;
+    if (len < APPLY_BUFFER_SIZE && APPLY_BUFFER_SIZE_OK) {
+      return fromCharCode.apply(null, buffer);
+    }
+    if (APPLY_BUFFER_SIZE_OK === null) {
+      try {
+        const s = fromCharCode.apply(null, buffer);
+        if (len > APPLY_BUFFER_SIZE) {
+          setApplyBufferSizeOk(true);
+        }
+        return s;
+      } catch (e) {
+        setApplyBufferSizeOk(false);
+      }
+    }
+  }
+  return bufferToString_chunked(buffer);
+}
+function bufferToString_chunked(buffer) {
+  let string = "";
+  const length = buffer.length;
+  let i = 0;
+  let sub;
+  while (i < length) {
+    if (!Array.isArray(buffer) && buffer.subarray) {
+      sub = buffer.subarray(i, i + APPLY_BUFFER_SIZE);
+    } else {
+      sub = buffer.slice(i, i + APPLY_BUFFER_SIZE);
+    }
+    i += APPLY_BUFFER_SIZE;
+    if (APPLY_BUFFER_SIZE_OK) {
+      string += fromCharCode.apply(null, sub);
+      continue;
+    }
+    if (APPLY_BUFFER_SIZE_OK === null) {
+      try {
+        string += fromCharCode.apply(null, sub);
+        if (sub.length > APPLY_BUFFER_SIZE) {
+          setApplyBufferSizeOk(true);
+        }
+        continue;
+      } catch (e) {
+        setApplyBufferSizeOk(false);
+      }
+    }
+    return bufferToString_slow(buffer);
+  }
+  return string;
+}
+function bufferToString_slow(buffer) {
+  let string = "";
+  const length = buffer.length;
+  for (let i = 0; i < length; i++) {
+    string += fromCharCode(buffer[i]);
+  }
+  return string;
+}
+function createWindow() {
+  let i = WINDOW_MAX >> 7;
+  let win = "        ";
+  while (!(i & WINDOW_MAX)) {
+    win += win;
+    i <<= 1;
+  }
+  return win;
+}
+
+// src/libs/lzbase62/src/compressor.ts
+var Compressor = class {
+  _data = null;
+  _table = null;
+  _result = null;
+  _onDataCallback;
+  _onEndCallback;
+  _offset = 0;
+  _dataLen = 0;
+  _index = 0;
+  _length = 0;
+  /**
+   * @param {CompressorOptions} [options] - Compression options.
+   */
+  constructor(options) {
+    this._init(options);
+  }
+  /**
+   * Initializes or re-initializes the compressor's state.
+   * @private
+   * @param {CompressorOptions} [options] - Compression options.
+   */
+  _init(options) {
+    options = options || {};
+    this._data = null;
+    this._table = null;
+    this._result = null;
+    this._onDataCallback = options.onData;
+    this._onEndCallback = options.onEnd;
+  }
+  /**
+   * Creates the base62 lookup table for compression.
+   * @private
+   * @returns {BufferType} The character code table.
+   */
+  _createTable() {
+    const table = createBuffer(8, TABLE_LENGTH);
+    for (let i = 0; i < TABLE_LENGTH; i++) {
+      table[i] = BASE62TABLE.charCodeAt(i);
+    }
+    return table;
+  }
+  /**
+   * Handles a chunk of compressed data.
+   * Either calls the onData callback or appends to the internal result string.
+   * @private
+   * @param {BufferType} buffer - The buffer containing the data chunk.
+   * @param {number} length - The length of the data in the buffer.
+   */
+  _onData(buffer, length) {
+    const chunk = bufferToString_fast(buffer, length);
+    if (this._onDataCallback) {
+      this._onDataCallback(chunk);
+    } else if (this._result !== null) {
+      this._result += chunk;
+    }
+  }
+  /**
+   * Finalizes the compression process.
+   * @private
+   */
+  _onEnd() {
+    if (this._onEndCallback) {
+      this._onEndCallback();
+    }
+    this._data = this._table = null;
+  }
+  /**
+   * Searches for the longest matching string in the sliding window.
+   * @private
+   * @returns {boolean} `true` if a match was found, otherwise `false`.
+   */
+  _search() {
+    let i = 2;
+    const data = this._data;
+    const offset = this._offset;
+    let len = BUFFER_MAX;
+    if (this._dataLen - offset < len) {
+      len = this._dataLen - offset;
+    }
+    if (i > len) {
+      return false;
+    }
+    const pos = offset - WINDOW_BUFFER_MAX;
+    const win = data.substring(pos, offset + len);
+    const limit = offset + i - 3 - pos;
+    let j, s, index, lastIndex, bestIndex, winPart;
+    do {
+      if (i === 2) {
+        s = data.charAt(offset) + data.charAt(offset + 1);
+        index = win.indexOf(s);
+        if (index === -1 || index > limit) {
+          break;
+        }
+      } else if (i === 3) {
+        s = s + data.charAt(offset + 2);
+      } else {
+        s = data.substr(offset, i);
+      }
+      if (STRING_LASTINDEXOF_BUG) {
+        winPart = data.substring(pos, offset + i - 1);
+        lastIndex = winPart.lastIndexOf(s);
+      } else {
+        lastIndex = win.lastIndexOf(s, limit);
+      }
+      if (lastIndex === -1) {
+        break;
+      }
+      bestIndex = lastIndex;
+      j = pos + lastIndex;
+      do {
+        if (data.charCodeAt(offset + i) !== data.charCodeAt(j + i)) {
+          break;
+        }
+      } while (++i < len);
+      if (index === lastIndex) {
+        i++;
+        break;
+      }
+    } while (++i < len);
+    if (i === 2) {
+      return false;
+    }
+    this._index = WINDOW_BUFFER_MAX - bestIndex;
+    this._length = i - 1;
+    return true;
+  }
+  /**
+   * Compresses the input data string.
+   * @param {string | null} data - The string data to compress.
+   * @returns {string} The compressed data as a base62 encoded string.
+   */
+  compress(data) {
+    if (data == null || data.length === 0) {
+      return "";
+    }
+    let result = "";
+    const table = this._createTable();
+    let win = createWindow();
+    const buffer = createBuffer(8, COMPRESS_CHUNK_SIZE);
+    let i = 0;
+    this._result = "";
+    this._offset = win.length;
+    this._data = win + data;
+    this._dataLen = this._data.length;
+    let index = -1;
+    let lastIndex = -1;
+    let c, c1, c2, c3, c4;
+    while (this._offset < this._dataLen) {
+      if (!this._search()) {
+        c = this._data.charCodeAt(this._offset++);
+        if (c < LATIN_BUFFER_MAX) {
+          if (c < UNICODE_CHAR_MAX) {
+            c1 = c;
+            index = LATIN_INDEX;
+          } else {
+            c1 = c % UNICODE_CHAR_MAX;
+            c2 = (c - c1) / UNICODE_CHAR_MAX;
+            index = c2 + LATIN_INDEX;
+          }
+          if (lastIndex === index) {
+            buffer[i++] = table[c1];
+          } else {
+            buffer[i++] = table[index - LATIN_INDEX_START];
+            buffer[i++] = table[c1];
+            lastIndex = index;
+          }
+        } else {
+          if (c < UNICODE_BUFFER_MAX) {
+            index = UNICODE_INDEX;
+            c1 = c;
+          } else {
+            c1 = c % UNICODE_BUFFER_MAX;
+            c2 = (c - c1) / UNICODE_BUFFER_MAX;
+            index = c2 + UNICODE_INDEX;
+          }
+          if (c1 < UNICODE_CHAR_MAX) {
+            c3 = c1;
+            c4 = 0;
+          } else {
+            c3 = c1 % UNICODE_CHAR_MAX;
+            c4 = (c1 - c3) / UNICODE_CHAR_MAX;
+          }
+          if (lastIndex === index) {
+            buffer[i++] = table[c3];
+            buffer[i++] = table[c4];
+          } else {
+            buffer[i++] = table[CHAR_START];
+            buffer[i++] = table[index - TABLE_LENGTH];
+            buffer[i++] = table[c3];
+            buffer[i++] = table[c4];
+            lastIndex = index;
+          }
+        }
+      } else {
+        if (this._index < BUFFER_MAX) {
+          c1 = this._index;
+          c2 = 0;
+        } else {
+          c1 = this._index % BUFFER_MAX;
+          c2 = (this._index - c1) / BUFFER_MAX;
+        }
+        if (this._length === 2) {
+          buffer[i++] = table[c2 + COMPRESS_FIXED_START];
+          buffer[i++] = table[c1];
+        } else {
+          buffer[i++] = table[c2 + COMPRESS_START];
+          buffer[i++] = table[c1];
+          buffer[i++] = table[this._length];
+        }
+        this._offset += this._length;
+        if (~lastIndex) {
+          lastIndex = -1;
+        }
+      }
+      if (i >= COMPRESS_CHUNK_MAX) {
+        this._onData(buffer, i);
+        i = 0;
+      }
+    }
+    if (i > 0) {
+      this._onData(buffer, i);
+    }
+    this._onEnd();
+    result = this._result;
+    this._result = null;
+    return result === null ? "" : result;
+  }
+};
+
+// src/libs/lzbase62/src/index.ts
+function compress(data, options) {
+  return new Compressor(options).compress(data);
+}
 
 // src/libs/version_check.ts
 function parseSemVer(v) {
@@ -451,7 +847,7 @@ function compareVersion(tsV, rustV) {
 }
 
 // src/version.ts
-var VERSION = "v0.3.1";
+var VERSION = "v0.4.1";
 
 // src/snowfall.ts
 var SnowFall = class {
@@ -502,7 +898,7 @@ var SnowFall = class {
    * sfソースコードをコンパイルする
    * @param input ソースコードの文字列
    * @param debug ソースマップを追加するか
-   * @returns バイナリデータ
+   * @returns バイナリデータなど
    */
   compile_bin(input, debug) {
     const wasm2 = this.ensureInitialized();
@@ -526,9 +922,26 @@ var SnowFall = class {
       result.free();
     }
   }
-  // public compile(input: string, debug: boolean): string {
-  // 	return lzbase62.compress(this.compile_bin(input, debug));
-  // }
+  /**
+   * sfソースコードをコンパイルする
+   * @param input ソースコードの文字列
+   * @param debug ソースマップを追加するか
+   * @returns テキストデータなど
+   */
+  compile(input, debug) {
+    const result = this.compile_bin(input, debug);
+    if (result.errors) {
+      return {
+        errors: result.errors
+      };
+    }
+    if (result.binary) {
+      return {
+        data: compress(strFromU8Latin1(result.binary))
+      };
+    }
+    return {};
+  }
   /* ================================================== */
   /* デバッグ用機能 */
   /* ================================================== */
@@ -605,4 +1018,22 @@ var SnowFall = class {
 export {
   SnowFall
 };
+/*!
+ * lzbase62 v2.0.0 - LZ77(LZSS) based compression algorithm in base62 for JavaScript
+ * Copyright (c) 2014-2020 polygon planet <polygon.planet.aqua@gmail.com>
+ * https://github.com/polygonplanet/lzbase62
+ * @license MIT
+ *
+ * Forked and modified by SnowFall2 Project
+ * Modifications:
+ * - Converted from JavaScript to TypeScript
+ * - Added type definitions
+ */
+/**
+ * forked from lzbase62
+ * @module lzbase62
+ * @see https://github.com/polygonplanet/lzbase62
+ * @license MIT
+ * @version 2.0.0
+ */
 //# sourceMappingURL=snowfall.js.map

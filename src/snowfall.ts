@@ -1,7 +1,9 @@
 import init, * as wasm from "../pkg/snowfall_core";
 import { SnowFallError } from "./common/SnowFallError";
-import type { CompileResult, ISnowFallError, ParserResult, Token } from "./common/types";
+import type { CompileBinResult, CompileStrResult, ISnowFallError, ParserResult, Token } from "./common/types";
+import { strFromU8Latin1 } from "./libs/compress";
 import { Logger } from "./libs/Logger";
+import * as lzbase62 from "./libs/lzbase62/src";
 import { compareVersion, parseSemVer } from "./libs/version_check";
 import { VERSION } from "./version";
 
@@ -67,9 +69,9 @@ export class SnowFall {
 	 * sfソースコードをコンパイルする
 	 * @param input ソースコードの文字列
 	 * @param debug ソースマップを追加するか
-	 * @returns バイナリデータ
+	 * @returns バイナリデータなど
 	 */
-	public compile_bin(input: string, debug: boolean): CompileResult {
+	public compile_bin(input: string, debug: boolean): CompileBinResult {
 		const wasm = this.ensureInitialized();
 		const result = wasm.compile(input, debug);
 		try {
@@ -99,9 +101,26 @@ export class SnowFall {
 		}
 	}
 
-	// public compile(input: string, debug: boolean): string {
-	// 	return lzbase62.compress(this.compile_bin(input, debug));
-	// }
+	/**
+	 * sfソースコードをコンパイルする
+	 * @param input ソースコードの文字列
+	 * @param debug ソースマップを追加するか
+	 * @returns テキストデータなど
+	 */
+	public compile(input: string, debug: boolean): CompileStrResult {
+		const result = this.compile_bin(input, debug);
+		if (result.errors) {
+			return {
+				errors: result.errors,
+			};
+		}
+		if (result.binary) {
+			return {
+				data: lzbase62.compress(strFromU8Latin1(result.binary)),
+			};
+		}
+		return {};
+	}
 
 	/* ================================================== */
 	/* デバッグ用機能 */

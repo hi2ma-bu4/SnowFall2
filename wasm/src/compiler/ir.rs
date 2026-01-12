@@ -38,6 +38,7 @@ struct Scope {
     offset: u32,
 }
 
+/// IRコンパイル
 pub struct IrCompiler<'a> {
     source: &'a str,
 
@@ -86,6 +87,7 @@ impl<'a> IrCompiler<'a> {
         }
     }
 
+    /// コンパイルを実施
     pub fn compile(mut self, program: ProgramAst) -> IrModule {
         for stmt in program.statements {
             self.compile_statement(stmt);

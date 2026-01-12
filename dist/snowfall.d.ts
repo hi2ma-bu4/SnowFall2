@@ -321,8 +321,12 @@ export interface ParserResult {
 	ast?: ProgramAst;
 	errors?: ISnowFallError[];
 }
-export interface CompileResult {
+export interface CompileBinResult {
 	binary?: Uint8Array;
+	errors?: ISnowFallError[];
+}
+export interface CompileStrResult {
+	data?: string;
 	errors?: ISnowFallError[];
 }
 export type WasmModule = typeof wasm;
@@ -344,9 +348,16 @@ export declare class SnowFall {
 	 * sfソースコードをコンパイルする
 	 * @param input ソースコードの文字列
 	 * @param debug ソースマップを追加するか
-	 * @returns バイナリデータ
+	 * @returns バイナリデータなど
 	 */
-	compile_bin(input: string, debug: boolean): CompileResult;
+	compile_bin(input: string, debug: boolean): CompileBinResult;
+	/**
+	 * sfソースコードをコンパイルする
+	 * @param input ソースコードの文字列
+	 * @param debug ソースマップを追加するか
+	 * @returns テキストデータなど
+	 */
+	compile(input: string, debug: boolean): CompileStrResult;
 	/**
 	 * デバッグ用のLexer関数
 	 * @param input ソースコードの文字列
